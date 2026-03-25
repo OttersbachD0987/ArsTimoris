@@ -844,7 +844,7 @@ int main(int argc, char** argv) {
             )
         )
     ).first->second->Hookup(gameState, roomMoveMenu, element);
-    std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> hpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(element->components.at("Text"));
+    //std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> hpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(element->components.at("Text"));
     #pragma endregion
     #pragma endregion
 

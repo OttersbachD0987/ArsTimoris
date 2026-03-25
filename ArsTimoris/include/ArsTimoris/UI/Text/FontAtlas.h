@@ -2,6 +2,7 @@
 #ifndef ARS_TIMORIS__UI__TEXT__FONT_ATLAS_H
 #define ARS_TIMORIS__UI__TEXT__FONT_ATLAS_H
 #include <string>
+#include <string_view>
 #include <cstdint>
 
 struct SDL_Texture;
@@ -15,6 +16,9 @@ namespace ArsTimoris::UI::Text {
         uint32_t atlasWidth;
         uint32_t atlasHeight;
         SDL_Texture* atlas;
+
+        FontAtlas(std::string_view a_name, uint32_t a_gw, uint32_t a_gh);
+        ~FontAtlas();
     };
 }
 #endif

@@ -8,4 +8,12 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+if (MSVC)
+    # warning level 4
+    #add_compile_options(/W4)
+else()
+    # additional warnings
+    add_compile_options(-fpermissive)
+endif()
+
 add_subdirectory(ArsTimoris)
