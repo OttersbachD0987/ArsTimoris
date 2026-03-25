@@ -1,0 +1,277 @@
+# Encounters
+
+## Format
+
+An encounter entry has the following format:
+
+```nohighlight
+{WEIGHT}
+
+{EFFECT}
+
+{DELIM};
+```
+
+***
+
+Name   | Value      | Description
+:------|:----------:|:-----------
+WEIGHT | Sockscript | A sockscript block that must return an int32 to serve as the relative weight of the encounter.
+EFFECT | Sockscript | A sockscript block that runs the effect of the encounter, does not need to return a value.
+DELIM  | String     | CONTINUE if there is another entry in the file, FINAL to finish the parsing.
+
+***
+
+The file should always end with a `FINAL` delim.
+
+## Example
+
+### encounters.data
+
+```nohighlight
+{{
+    if (gameState.curRoom <= 0) {
+        return 1;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 0) {
+        return 5;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    console.Print("Nothing happens as you enter the room.\n");
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 0) {
+        return 5;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    if (player.maxMana <= 0) {
+        if (player.HasPerk(ARCANE_EYES)) {
+            console.Print("There is a mana fountain in the area, but you can't benefit from it.\n");
+        } else {
+            console.Print("Nothing of interest can be found in the room.\n");
+        } end;
+        end;
+    } end;
+
+    console.Print("A mana fountain is in the area, ");
+
+    if (player.curMana == player.maxMana) {
+        console.Print("however, you are already at your maximum.\n");
+    } elif (player.curMana > player.maxMana) {
+        console.Print("however, due to you being overloaded with mana, you take 5 damage.\n");
+        player.Hurt(5);
+    } else {
+        manaGain<uint32> = mathi.Min(player.maxMana - player.curMana, 25);
+        console.Print("you have regained {uint32@manaGain@} mana.\n");
+        player.RegainMana(uint32@manaGain@);
+        if (player.curMana == player.maxMana) {
+            console.Print("Your mana is fully replinished.\n");
+        } end;
+        delete manaGain;
+    } end;
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 0) {
+        return 5;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    console.Print("A restorative spring is in the area, ");
+
+    if (player.curHP == player.maxHP) {
+        console.Print("however, you are already at your maximum health.\n");
+    } elif (player.curHP > player.maxHP) {
+        console.Print("however, you are healthier than is expected.\n");
+    } else {
+        hpGain<uint32> = mathi.Min(player.maxHP - player.curHP, 25);
+        console.Print("you have regained {uint32@hpGain@} health.\n");
+        player.Heal(hpGain);
+        if (player.curHP == player.maxHP) {
+            console.Print("Your health is fully replinished.\n");
+        } end;
+        delete hpGain;
+    } end;
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 0) {
+        return 5;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddInhabitant("Goblin", "Grunt", "Grunt");
+    room.AddInhabitant("Goblin", "Grunt", "Grunt");
+    room.AddInhabitant("Goblin", "Shaman", "Shaman");
+    room.AddRoomAction("Treasure Trove");
+    room.SetFlag("TreasureTrove_Count", 3);
+    room.SetFlag("TreasureTrove_Dice", 12);
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 15) {
+        return 4;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Shaman", "Shaman");
+    room.AddRoomAction("Treasure Trove");
+    room.SetFlag("TreasureTrove_Count", 2);
+    room.SetFlag("TreasureTrove_Dice", 20);
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 0) {
+        return 2;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    roll<uint32> = random.RollDice(1, 3);
+
+    if (uint32@roll@ == 1) {
+        player.AddSkillModifier("Martial Combat", random.RollDice(1, 4));
+    } elif (uint32@roll@ == 2) {
+        player.AddSkillModifier("Unarmed Combat", random.RollDice(1, 4));
+    } else {
+        player.AddSkillModifier("Brawling", random.RollDice(1, 4));
+    } end;
+
+    console.Print("There is a training dummy in the middle of the room... You feel better at something.\n");
+    delete roll;
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 5) {
+        if (player.gold >= 15) {
+            return 3;
+        } else {
+            return 1;
+        } end;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddShop("Barterer");
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 20) {
+        return 3;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Priest", "Priest");
+    room.AddRoomAction("Treasure Trove");
+    room.SetFlag("TreasureTrove_Count", 4);
+    room.SetFlag("TreasureTrove_Dice", 12);
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 30) {
+        return mathi.Min(7, gameState.curRoom / 10);
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Priest", "Priest:Elder");
+    room.AddRoomAction("Treasure Trove");
+    room.SetFlag("TreasureTrove_Count", 4);
+    room.SetFlag("TreasureTrove_Dice", 16);
+    end;
+}}
+
+CONTINUE;
+
+{{
+    if (gameState.curRoom > 35) {
+        if (player.maxHP > 200) {
+            return mathi.Min(5, gameState.curRoom / 20);
+        } else {
+            return mathi.Min(3, gameState.curRoom / 25);
+        } end;
+    } else {
+        return 0;
+    } end;
+}}
+
+{{
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Goblin", "Squire", "Squire");
+    room.AddInhabitant("Revenant", "Reaper");
+    room.AddRoomAction("Treasure Trove");
+    room.SetFlag("TreasureTrove_Count", 5);
+    room.SetFlag("TreasureTrove_Dice", 16);
+    end;
+}}
+
+FINAL;
+
+```

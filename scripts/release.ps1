@@ -1,0 +1,1 @@
+Start-Process -FilePath ".\out\build\x64\Release\ArsTimoris.exe" -WorkingDirectory ".\out\build\x64\Release"

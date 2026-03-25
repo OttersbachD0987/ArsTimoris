@@ -1,0 +1,23 @@
+Executing workflow step 1 of 3: configure preset "x64"
+
+-- Running vcpkg install
+All requested packages are currently installed.
+All requested installations completed successfully in: 2.93 ms
+-- Running vcpkg install - done
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/sockm/Code/CPP/CSC134/M3Lab1/out/build/x64
+
+Executing workflow step 2 of 3: build preset "x64-release"
+
+[1/3] Building CXX object ArsTimoris\CMakeFiles\ArsTimoris.dir\Release\src\ArsTimoris\Game\Map\RoomInstance.cpp.obj
+FAILED: ArsTimoris/CMakeFiles/ArsTimoris.dir/Release/src/ArsTimoris/Game/Map/RoomInstance.cpp.obj 
+C:\PROGRA~1\MICROS~3\2022\COMMUN~1\VC\Tools\MSVC\1443~1.348\bin\Hostx64\x64\cl.exe  /nologo /TP -DCMAKE_INTDIR=\"Release\" -IC:\Users\sockm\Code\CPP\CSC134\M3Lab1\ArsTimoris\include /DWIN32 /D_WINDOWS /W3 /GR /EHsc /O2 /Ob2 /DNDEBUG -std:c++latest -MD /showIncludes /FoArsTimoris\CMakeFiles\ArsTimoris.dir\Release\src\ArsTimoris\Game\Map\RoomInstance.cpp.obj /FdArsTimoris\CMakeFiles\ArsTimoris.dir\Release\ /FS -c C:\Users\sockm\Code\CPP\CSC134\M3Lab1\ArsTimoris\src\ArsTimoris\Game\Map\RoomInstance.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(2078): error C2036: 'Action *': unknown size
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(2078): note: the template instantiation context (the oldest one first) is
+C:\Users\sockm\Code\CPP\CSC134\M3Lab1\ArsTimoris\include\ArsTimoris/Game/Entity/EntityTemplate.h(24): note: see reference to class template instantiation 'std::vector<Action,std::allocator<Action>>' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(2066): note: while compiling class template member function 'void std::vector<Action,std::allocator<Action>>::_Tidy(void) noexcept'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.43.34808\include\vector(815): note: see the first reference to 'std::vector<Action,std::allocator<Action>>::_Tidy' in 'std::vector<Action,std::allocator<Action>>::~vector'
+C:\Users\sockm\Code\CPP\CSC134\M3Lab1\ArsTimoris\include\ArsTimoris/Game/Entity/EntityData.h(45): note: see the first reference to 'std::vector<Action,std::allocator<Action>>::~vector' in 'EntityData::~EntityData'
+[2/3] Building CXX object ArsTimoris\CMakeFiles\ArsTimoris.dir\Release\src\ArsTimoris\Game\Entity\NPCData.cpp.obj
+ninja: build stopped: subcommand failed.

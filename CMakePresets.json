@@ -1,0 +1,52 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "x64",
+            "displayName": "x64 Build",
+            "description": "x64 Build",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "$env{CC}",
+                "CMAKE_CXX_COMPILER": "$env{CXX}"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "x64-debug",
+            "displayName": "x64 - Debug",
+            "configurePreset": "x64",
+            "configuration": "Debug"
+        },
+        {
+            "name": "x64-release",
+            "displayName": "x64 - Release",
+            "configurePreset": "x64",
+            "configuration": "Release"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "x64-all",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "x64"
+                },
+                {
+                    "type": "build",
+                    "name": "x64-release"
+                },
+                {
+                    "type": "build",
+                    "name": "x64-debug"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+(cd ./out/build/x64/Release; ./ArsTimoris)

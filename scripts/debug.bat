@@ -1,0 +1,1 @@
+START "" /D ".\out\build\x64\Debug" ".\out\build\x64\Debug\ArsTimoris.exe"

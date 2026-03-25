@@ -1,0 +1,66 @@
+if (a_gameState.player.maxMana <= 0) {
+    if (a_gameState.player.perks.test(static_cast<size_t>(Perks::ARCANE_EYES))) {
+        std::cout << "There is a mana fountain in the area, but you can't benefit from it." << std::endl;
+    } else {
+        std::cout << "Nothing of interest can be found in the room." << std::endl;
+    }
+    return;
+}
+
+std::cout << "A mana fountain is in the area, ";
+
+if (a_gameState.player.curMana == a_gameState.player.maxMana) {
+    std::cout << "however, you are already at your maximum." << std::endl;
+} else if (a_gameState.player.curMana > a_gameState.player.maxMana) {
+    std::cout << "however, due to you being overloaded with mana, you take 5 damage." << std::endl;
+    a_gameState.player.Hurt(5);
+} else {
+    uint32_t manaGain = std::min<uint32_t>(a_gameState.player.maxMana - a_gameState.player.curMana, 25);
+    std::cout << "you have regained " << manaGain << " mana." << std::endl;
+    a_gameState.player.RegainMana(manaGain);
+    if (a_gameState.player.curMana == a_gameState.player.maxMana) {
+        std::cout << "Your mana is fully replinished." << std::endl;
+    }
+}
+
+{
+    if (player.maxMana <= 0) {
+        if (player.HasPerk(ARCANE_EYES)) {
+            console.Print("There is a mana fountain in the area<comma> but you can't benefit from it.\n");
+        } else {
+            console.Print("Nothing of interest can be found in the room.\n");
+        } end;
+        end;
+    } end;
+
+    console.Print("A mana fountain is in the area, ");
+
+    if (player.curMana == player.maxMana) {
+        console.Print("however<comma> you are already at your maximum.\n");
+    } elif (player.curMana > player.maxMana) {
+        console.Print("however<comma> due to you being overloaded with mana, you take 5 damage.\n");
+        player.Hurt(5);
+    } else {
+        manaGain<uint32> = math.Min(player.maxMana - player.curMana, 25);
+        console.Print("you have regained {uint32@manaGain@} mana.\n");
+        player.RegainMana(uint32@manaGain@);
+        if (player.curMana == player.maxMana) {
+            console.Print("Your mana is fully replinished.\n");
+        } end;
+    } end;
+}
+
+
+{
+    if (player.HasPerk(ARCANE_EYES)) {
+        console.Print("There is a mana fountain in the area<comma> but you can't benefit from it.\n");
+    } else {
+        console.Print("Nothing of interest can be found in the room.\n");
+    } end;
+}
+
+{
+    manaGain<uint32> = math.Min(player.maxMana - player.curMana, 25);
+    console.Print("you have regained {uint32@manaGain@} mana.\n");
+}
+
