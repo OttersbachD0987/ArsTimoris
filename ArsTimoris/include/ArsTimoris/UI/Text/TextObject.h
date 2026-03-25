@@ -2,7 +2,8 @@
 #ifndef ARS_TIMORIS__UI__TEXT__TEXT_OBJECT_H
 #define ARS_TIMORIS__UI__TEXT__TEXT_OBJECT_H
 #include <memory>
-#include <ArsTimoris/UI/Text/TextSegment.h>
+#include <string>
+#include <string_view>
 
 namespace ArsTimoris::UI::Text {
     struct FontAtlas;
@@ -10,9 +11,9 @@ namespace ArsTimoris::UI::Text {
     struct TextObject {
         std::shared_ptr<FontAtlas> font;
         float pt;
-        TextSegment text;
+        std::string text;
 
-        TextObject(std::shared_ptr<FontAtlas>& a_font, float a_pt, TextSegment a_text);
+        TextObject(std::shared_ptr<FontAtlas>& a_font, float a_pt, std::string_view a_text);
     };
 }
 #endif
