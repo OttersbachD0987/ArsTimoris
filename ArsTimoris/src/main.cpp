@@ -128,6 +128,7 @@ int main(int argc, char** argv) {
                 gameState.assets.AddLazyFont(dir_entry.path().string(), dir_entry.path().stem().string());
 
                 // Deprecated
+                /*
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 12), 12);
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 16), 16);
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 18), 18);
@@ -135,6 +136,7 @@ int main(int argc, char** argv) {
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 24), 24);
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 30), 30);
                 gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 36), 36);
+                */
             } else if (dir_entry.path().extension().string() == ".wav") {
                 gameState.assets.AddSound(gameState.audioDevice, dir_entry.path().string(), dir_entry.path().stem().string());
             }
@@ -1650,6 +1652,28 @@ int main(int argc, char** argv) {
                     case Menu::NONE: {
                         SDL_FRect thingy = {0, 140, 1200, 600};
                         SDL_RenderTexture(gameState.renderer, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->texture, NULL, &thingy);
+                        break;
+                    }
+                    case Menu::COMBAT: {
+                        SDL_FRect barBack = {0, 598, 24, 104};
+                        SDL_SetRenderDrawColor(gameState.renderer, 20, 20, 20, SDL_ALPHA_OPAQUE);
+                        SDL_RenderFillRect(gameState.renderer, &barBack);
+                        SDL_FRect fillBack = {2, 600, 20, (102.0f - (2.0f * gameState.player.turns)) / gameState.player.turns};
+                        SDL_SetRenderDrawColor(gameState.renderer, 55, 55, 55, SDL_ALPHA_OPAQUE);
+                        for (size_t i = 0; i < gameState.player.usedTurns; ++i) {
+                            SDL_RenderFillRect(gameState.renderer, &fillBack);
+                            fillBack.y += fillBack.h + 2;
+                        }
+                        SDL_SetRenderDrawColor(gameState.renderer, 75, 155, 75, SDL_ALPHA_OPAQUE);
+                        for (size_t i = 0; i < gameState.player.turns - gameState.player.usedTurns; ++i) {
+                            SDL_RenderFillRect(gameState.renderer, &fillBack);
+                            fillBack.y += fillBack.h + 2;
+                        }
+
+                        //SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
+                        for (size_t i = combatNPCs.size() - 1; i >= 0; --i) {
+                            SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
+                        }
                         break;
                     }
                 }
