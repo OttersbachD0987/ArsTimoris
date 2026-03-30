@@ -1694,11 +1694,13 @@ int main(int argc, char** argv) {
                         SDL_FRect fillBack = {2, 600, 20, (102.0f - (2.0f * gameState.player.turns)) / gameState.player.turns};
                         SDL_SetRenderDrawColor(gameState.renderer, 55, 55, 55, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.usedTurns; ++i) {
+                            std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
                         }
                         SDL_SetRenderDrawColor(gameState.renderer, 75, 155, 75, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.turns - gameState.player.usedTurns; ++i) {
+                            std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
                         }
