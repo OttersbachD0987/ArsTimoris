@@ -1045,12 +1045,16 @@ int main(int argc, char** argv) {
     #pragma region Commands
     ArsTimoris::Commands::CommandHandler commandHandler = ArsTimoris::Commands::CommandHandler();
 
-    commandHandler.AddCommand(ArsTimoris::Commands::Command("help", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
-        std::cout << "Available commands:" << std::endl;
-        for (ArsTimoris::Commands::Command command : handler.commands) {
-            std::cout << "\t" << command.name << ": " << command.description << std::endl;
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "help", 
+        "Display all available commands.",
+        [&](const ArsTimoris::Commands::CommandHandler& a_handler, const std::vector<ArsTimoris::Commands::Parameter>& a_parameters) {
+            std::cout << "Available commands:" << std::endl;
+            for (ArsTimoris::Commands::Command command : a_handler.commands) {
+                std::cout << "\t" << command.name << ": " << command.description << std::endl;
+            }
         }
-    }));
+    ));
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command("add_gold", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
         if (parameters.size() < 1) {

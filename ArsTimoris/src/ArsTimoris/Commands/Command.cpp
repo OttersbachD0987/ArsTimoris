@@ -5,6 +5,7 @@
 #include <cctype>
 #include <stdexcept>
 #include <iostream>
+#include <cstdint>
 
 namespace ArsTimoris::Commands {
     Command::Command(std::string name, std::string description) {
@@ -37,7 +38,7 @@ namespace ArsTimoris::Commands {
         while (a_stream.good()) {
             char c = a_stream.get();
             if (!isprint(c) && c != ' ' && c != '"') {
-                std::cout << "Non-printable character: " << c << std::endl;
+                std::cout << "Non-printable character: " << c  << " [" << (uint8_t)c << "]" << std::endl;
                 continue;
             }
             if (c == '"') {
@@ -50,24 +51,24 @@ namespace ArsTimoris::Commands {
                     // Add the parameter to the result, make sure to parse the correct type
                     if (hasBeenString) {
                         a_parameters.push_back(Parameter(currentParam));
-                        std::cout << "Pushed string: " << currentParam << std::endl;
+                        //std::cout << "Pushed string: " << currentParam << std::endl;
                         hasBeenString = false;
                     } else if (currentParam == "true" || currentParam == "false") {
                         a_parameters.push_back(Parameter(currentParam == "true"));
-                        std::cout << "Pushed bool: " << currentParam << std::endl;
+                        //std::cout << "Pushed bool: " << currentParam << std::endl;
                     } else {
                         try {
                             if (currentParam.find('.') != std::string::npos) {
                                 a_parameters.push_back(Parameter(std::stod(currentParam)));
-                                std::cout << "Pushed double: " << currentParam << std::endl;
+                                //std::cout << "Pushed double: " << currentParam << std::endl;
                             } else {
                                 a_parameters.push_back(Parameter(std::stoi(currentParam)));
-                                std::cout << "Pushed int: " << currentParam << std::endl;
+                                //std::cout << "Pushed int: " << currentParam << std::endl;
                             }
                         } catch (const std::invalid_argument&) {
                             a_parameters.push_back(Parameter(currentParam));  // Fallback to string, even if quotes weren't triggered
                             hasBeenString = false;
-                            std::cout << "Pushed string: " << currentParam << std::endl;
+                            //std::cout << "Pushed string: " << currentParam << std::endl;
                         }
                     }
                     //parameters.push_back(Parameter(currentParam));
