@@ -1161,7 +1161,9 @@ int main(int argc, char** argv) {
                                     case Menu::COMBAT: {
                                         for (const NPCDisplay& npc : combatNPCs) {
                                             if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
-
+                                                if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &room->inhabitants[npc.index])) {
+                                                    gameState.player.actions[choice].action(gameState, &gameState.player, &room->inhabitants[npc.index]);
+                                                }
                                             }
                                         }
                                         break;
@@ -1587,10 +1589,64 @@ int main(int argc, char** argv) {
                     }
                     case Menu::COMBAT: {
                         room = &gameState.rooms[gameState.curRoom];
-                        topActionText->SetText(gameState, &combatMenu->uiElements.at("Top Action"), std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
-                        middleActionText->SetText(gameState, &combatMenu->uiElements.at("Middle Action"), std::format("{}", gameState.player.actions[choice].name));
-                        bottomActionText->SetText(gameState, &combatMenu->uiElements.at("Bottom Action"), std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
+                        
+                        if (room->inhabitants.size() > 0) {
+                            topActionText->SetText(gameState, &combatMenu->uiElements.at("Top Action"), std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
+                            middleActionText->SetText(gameState, &combatMenu->uiElements.at("Middle Action"), std::format("{}", gameState.player.actions[choice].name));
+                            bottomActionText->SetText(gameState, &combatMenu->uiElements.at("Bottom Action"), std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
+                        
+                            if (gameState.player.usedTurns >= gameState.player.turns) {
+                                gameState.player.usedTurns = 0;
 
+                                for (size_t npcIndex = 0; npcIndex < room->inhabitants.size(); ++npcIndex) {
+                                    if (room->inhabitants[npcIndex].stunned) {
+                                        room->inhabitants[npcIndex].stunned = false;
+                                        std::cout << "The " << room->inhabitants[npcIndex].name << " is stunned." << std::endl;
+                                    } else if (room->inhabitants[npcIndex].curHP <= 0) {
+                                        std::cout << "The " << room->inhabitants[npcIndex].name << " is dead." << std::endl;
+                                    } else if (room->inhabitants[npcIndex].aiFunction != nullptr) {
+                                        (*room->inhabitants[npcIndex].aiFunction)(gameState, room->inhabitants[npcIndex]);
+                                    }
+                                    //EatInput();
+                                }
+
+                                room = &gameState.rooms[gameState.curRoom];
+
+                                std::vector<size_t> remove = std::vector<size_t>();
+
+                                for (int32_t j = room->inhabitants.size() - 1; j > -1; --j) {
+                                    if (room->inhabitants[j].curHP <= 0) {
+                                        gameState.player.xp += room->inhabitants[j].xp;
+                                        gameState.player.gold += room->inhabitants[j].gold;
+                                        for (size_t k = 0; k < room->inhabitants[j].onDeath.size(); ++k) {
+                                            gameState.rooms[gameState.curRoom].inhabitants[j].onDeath[k](gameState, gameState.rooms[gameState.curRoom].inhabitants[j]);
+                                        }
+                                        remove.push_back(j);
+                                    } else {
+                                        room->inhabitants[j].TurnEnd(gameState);
+                                    }
+                                }
+
+                                for (const size_t& toRemove : remove) {
+                                    room->inhabitants.erase(room->inhabitants.begin() + toRemove);
+                                    combatNPCs.erase(combatNPCs.begin() + toRemove);
+                                    room = &gameState.rooms[gameState.curRoom];
+                                }
+
+                                if (gameState.player.curHP <= 0) {
+                                    std::cout << "\nYou collapse to the floor, dead." << std::endl;
+                                    gameState.screen = Screen::GAME_OVER;
+                                    gameState.menu = Menu::NONE;
+                                    combatMenu->enabled = false;
+                                } else {
+                                    gameState.player.TurnEnd(gameState);
+                                }
+                            }
+                        } else {
+                            gameState.menu = Menu::NONE;
+                            roomGeneralMenu->enabled = true;
+                            combatMenu->enabled = false;
+                        }
                         /*
                         if (room->inhabitants.size() > 0) {
                             bool enemiesGo = true;
@@ -1633,7 +1689,7 @@ int main(int argc, char** argv) {
                                     }
                                 }
 
-                                if (gameState.player.usedTurns < gameState.player.turns) {
+                                if (gameState.player.usedTurns >= gameState.player.turns && ) {
                                     enemiesGo = false;
                                 }
 
@@ -1795,13 +1851,13 @@ int main(int argc, char** argv) {
                         SDL_FRect fillBack = {2, 600, 20, (102.0f - (2.0f * gameState.player.turns)) / gameState.player.turns};
                         SDL_SetRenderDrawColor(gameState.renderer, 55, 55, 55, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.usedTurns; ++i) {
-                            std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
+                            //std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
                         }
                         SDL_SetRenderDrawColor(gameState.renderer, 75, 155, 75, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.turns - gameState.player.usedTurns; ++i) {
-                            std::println("FREE {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
+                            //std::println("FREE {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
                         }
