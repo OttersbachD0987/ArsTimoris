@@ -1182,7 +1182,9 @@ int main(int argc, char** argv) {
                             combatMenu->enabled = true;
                             choice = 0;
                             gameState.menu = Menu::COMBAT;
+                            std::cout << "Moogle" << std::endl;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
+                                std::println("({}, {}, {}, {}) {}", 20.0f + 40.0f * i, 30.0f, 40.0f, 60.0f, i);
                                 combatNPCs.push_back(NPCDisplay(
                                     SDL_FRect{20.0f + 40.0f * i, 30.0f, 40.0f, 60.0f}, 
                                     gameState.assets.textures.at("UIPanel"), i
