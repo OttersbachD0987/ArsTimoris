@@ -27,6 +27,8 @@
 #include <ArsTimoris/UI/UISliderComponent.h>
 #include <ArsTimoris/UI/UIAtlasTextComponent.h>
 #include <print>
+#include <thread>
+#include <ArsTimoris/Commands/CommandHandler.h>
 
 void PrintCombatNPCData(GameState& a_gameState, const NPCData& a_npc) {
     std::cout << a_npc.name<< "\n";
@@ -1039,6 +1041,50 @@ int main(int argc, char** argv) {
     uint64_t lastTime = SDL_GetTicks();
     gameState.inputData.keys = SDL_GetKeyboardState(&gameState.inputData.numKeys);
     gameState.inputData.oldKeys = (bool*)malloc(gameState.inputData.numKeys);
+
+    #pragma region Commands
+    ArsTimoris::Commands::CommandHandler commandHandler = ArsTimoris::Commands::CommandHandler();
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command("help", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+        std::cout << "Available commands:" << std::endl;
+        for (ArsTimoris::Commands::Command command : handler.commands) {
+            std::cout << "\t" << command.name << ": " << command.description << std::endl;
+        }
+    }));
+
+    //commandHandler.AddCommand(Command("", [&](const CommandHandler& handler, std::vector<Parameter> parameters) {}));
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command("", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {}));
+    #pragma endregion
+
+    // Launch a separate thread to handle console input
+    std::thread inputThread([&]() {
+        std::string command;
+        while (gameState.running) {
+            std::getline(std::cin, command);
+
+            // Process the command
+            // Trim leading and trailing whitespace
+            command = command.substr(command.find_first_not_of(" \t\r\n"));
+            if (command.length() == 0) {
+                continue;
+            }
+            command = command.substr(0, command.find_last_not_of(" \t\r\n") + 1);
+
+            // Split the command by whitespace
+            std::vector<ArsTimoris::Commands::Parameter> tokens;
+            std::string token;
+            std::istringstream tokenStream(command);
+            ArsTimoris::Commands::Command::Tokenize(tokenStream, tokens);
+
+            // Process the initializer
+            std::string initializer = std::get<std::string>(tokens[0]);
+            tokens.erase(tokens.begin());
+
+            commandHandler.ExecuteCommand(initializer, tokens);
+        }
+    });
+
     while (gameState.running) {
         //std::cout << "Very Start" << std::endl;
         deltaTime = SDL_GetTicks() - lastTime;
