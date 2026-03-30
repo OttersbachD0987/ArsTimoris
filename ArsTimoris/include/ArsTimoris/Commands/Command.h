@@ -8,24 +8,16 @@
 #include <sstream>
 
 namespace ArsTimoris::Commands {
-    /**
-     * @typedef Parameter
-     * @brief Defines a variant type for command parameters, allowing different data types.
-     *
-     * Parameter is used within the Command struct to represent values of varying types
-     * that can be passed as arguments, such as integers, floating-point numbers, strings, 
-     * or boolean values.
-     */
+    /// @typedef Parameter
+    /// @brief Defines a variant type for command parameters, allowing different data types.
+    ///
+    /// Parameter is used within the Command struct to represent values of varying types that can be passed as arguments, such as integers, floating-point numbers, strings, or boolean values.
     typedef std::variant<int, double, std::string, bool> Parameter;
 
-    /**
-     * @enum ParameterType
-     * @brief Specifies the type of parameter for command handling.
-     *
-     * The ParameterType enum defines the types of parameters that can
-     * be used in command handling within the system, allowing for
-     * type-specific processing.
-     */
+    /// @enum ParameterType
+    /// @brief Specifies the type of parameter for command handling.
+    ///
+    /// The ParameterType enum defines the types of parameters that can be used in command handling within the system, allowing for type-specific processing.
     enum ParameterType {
         INT,    ///< Integer parameter
         DOUBLE, ///< Floating-point parameter
@@ -33,39 +25,29 @@ namespace ArsTimoris::Commands {
         BOOL    ///< Boolean parameter
     };
 
-    /**
-     * @struct Command
-     * @brief Represents a command with a name, description, parameters, and an executable function.
-     *
-     * The Command struct allows for defining commands that can be executed on the server, each
-     * with a specific name, description, and associated parameters. It also supports a function
-     * that is called when the command is executed.
-     */
+    /// @struct Command
+    /// @brief Represents a command with a name, description, parameters, and an executable function.
+    ///
+    /// The Command struct allows for defining commands that can be executed on the server, each with a specific name, description, and associated parameters. It also supports a function that is called when the command is executed.
     struct Command;
 }
 
 #include <ArsTimoris/Commands/CommandHandler.h>
 
 namespace ArsTimoris::Commands {
-    /**
-     * @struct Command
-     * @brief Represents a command with a name, description, parameters, and an executable function.
-     *
-     * The Command struct allows for defining commands that can be executed on the server, each
-     * with a specific name, description, and associated parameters. It also supports a function
-     * that is called when the command is executed.
-     */
+    /// @struct Command
+    /// @brief Represents a command with a name, description, parameters, and an executable function.
+    ///
+    /// The Command struct allows for defining commands that can be executed on the server, each with a specific name, description, and associated parameters. It also supports a function that is called when the command is executed.
     struct Command {
         std::string name; ///< The name of the command.
         std::string description; ///< The description of the command.
         std::vector<ParameterType> parameters; ///< The parameters of the command.
         std::function<void(const CommandHandler& commandHandler, const std::vector<Parameter>&)> function; ///< The function to execute when the command is executed.
 
-        /**
-         * @brief Constructs a Command with a name and description.
-         * @param name The name of the command.
-         * @param description A brief description of the command.
-         */
+        /// @brief Constructs a Command with a name and description.
+        /// @param name The name of the command.
+        /// @param description A brief description of the command.
         Command(std::string name, std::string description);
 
         /// @brief Constructs a Command with a name and description.
@@ -91,6 +73,7 @@ namespace ArsTimoris::Commands {
         /// @param function The function to execute when the command is called.
         /// @param a_parameterTypes The parameter types of the function.
         Command(std::string name, std::string description, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function, const std::vector<ParameterType>& a_parameterTypes);
+        
         /// @brief Adds a parameter to the command.
         /// @param a_param The parameter value to add to the command.
         void AddParameter(ParameterType a_param);
