@@ -1700,7 +1700,7 @@ int main(int argc, char** argv) {
                         }
                         SDL_SetRenderDrawColor(gameState.renderer, 75, 155, 75, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.turns - gameState.player.usedTurns; ++i) {
-                            std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
+                            std::println("FREE {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
                         }
