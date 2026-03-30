@@ -24,7 +24,7 @@ namespace ArsTimoris::Commands {
     }
 
     void Command::AddParameter(ParameterType a_param) {
-        parameters.push_back(param);
+        parameters.push_back(a_param);
     }
 
     void Command::Tokenize(std::istringstream& a_stream, std::vector<Parameter>& a_parameters) {

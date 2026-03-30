@@ -1769,6 +1769,8 @@ int main(int argc, char** argv) {
         //std::cout << "Very end" << std::endl;
     }
 
+    inputThread.join();
+
     DebugLogging::CloseParserLog();
 
     return 0;
