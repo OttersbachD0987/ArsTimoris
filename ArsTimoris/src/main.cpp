@@ -1704,9 +1704,9 @@ int main(int argc, char** argv) {
                         }
 
                         //SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
-                        for (size_t i = combatNPCs.size() - 1; i >= 0; --i) {
-                            SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
-                        }
+                        //for (size_t i = combatNPCs.size() - 1; i >= 0; --i) {
+                        //    SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
+                        //}
                         break;
                     }
                 }
