@@ -74,6 +74,14 @@ int main(int argc, char** argv) {
     for (const std::pair<std::string, EntityTemplate>& entityTemplate : LoadEntityData(dataPath / "entities.data")) {
         GameData::ENTITY_TEMPLATES.emplace(entityTemplate);
     }
+
+    struct NPCDisplay {
+    public:
+        SDL_FRect area;
+        std::shared_ptr<ArsTimoris::Assets::TextureAsset> texture;
+        size_t index;
+    };
+    std::vector<NPCDisplay> combatNPCs = std::vector<NPCDisplay>();
     
     //std::cout << "The answer is: " << (std::pow(29, 452)) << "." << std::endl;
 
@@ -1015,7 +1023,16 @@ int main(int argc, char** argv) {
                     switch (event.button.button) {
                         case SDL_BUTTON_LEFT:
                             if (!gameState.uiManager.OnMouseLeftDown(gameState, &gameState.inputData.mousePos)) {
+                                switch (gameState.menu) {
+                                    case Menu::COMBAT: {
+                                        for (const NPCDisplay& npc : combatNPCs) {
+                                            if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
 
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
                             }
                             break;
                         case SDL_BUTTON_MIDDLE:
@@ -1132,6 +1149,12 @@ int main(int argc, char** argv) {
                             combatMenu->enabled = true;
                             choice = 0;
                             gameState.menu = Menu::COMBAT;
+                            for (size_t i = 0; i < room->inhabitants.size(); ++i) {
+                                combatNPCs.push_back(NPCDisplay{
+                                    SDL_FRect{20.0f + 40.0f * i, 30.0f, 40.0f, 60.0f}, 
+                                    gameState.assets.textures.at("UIPanel"), i
+                                });
+                            }
                             break;
                         }
 
