@@ -18,10 +18,23 @@ namespace ArsTimoris::Commands {
         this->function = function;
     }
 
+    Command::Command(std::string name, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function, const std::vector<ParameterType>& a_parameterTypes) {
+        this->name = name;
+        this->function = function;
+        this->parameters = a_parameterTypes;
+    }
+
     Command::Command(std::string name, std::string description, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function) {
         this->name = name;
         this->description = description;
         this->function = function;
+    }
+
+    Command::Command(std::string name, std::string description, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function, const std::vector<ParameterType>& a_parameterTypes) {
+        this->name = name;
+        this->description = description;
+        this->function = function;
+        this->parameters = a_parameterTypes;
     }
 
     void Command::AddParameter(ParameterType a_param) {

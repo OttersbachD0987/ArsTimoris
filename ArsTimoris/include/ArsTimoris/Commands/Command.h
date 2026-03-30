@@ -68,21 +68,29 @@ namespace ArsTimoris::Commands {
          */
         Command(std::string name, std::string description);
 
-        /**
-         * @brief Constructs a Command with a name and description.
-         * @param name The name of the command.
-         * @param function The function to execute when the command is called.
-         */
+        /// @brief Constructs a Command with a name and description.
+        /// @param name The name of the command.
+        /// @param function The function to execute when the command is called.
         Command(std::string name, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function);
 
-        /**
-         * @brief Constructs a Command with a name, description, and function.
-         * @param name The name of the command.
-         * @param description A brief description of the command.
-         * @param function The function to execute when the command is called.
-         */
+        /// @brief Constructs a Command with a name and description.
+        /// @param name The name of the command.
+        /// @param function The function to execute when the command is called.
+        /// @param a_parameterTypes The parameter types of the function.
+        Command::Command(std::string name, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function, const std::vector<ParameterType>& a_parameterTypes);
+        
+        /// @brief Constructs a Command with a name, description, and function.
+        /// @param name The name of the command.
+        /// @param description A brief description of the command.
+        /// @param function The function to execute when the command is called.
         Command(std::string name, std::string description, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function);
-
+        
+        /// @brief Constructs a Command with a name, description, and function.
+        /// @param name The name of the command.
+        /// @param description A brief description of the command.
+        /// @param function The function to execute when the command is called.
+        /// @param a_parameterTypes The parameter types of the function.
+        Command::Command(std::string name, std::string description, std::function<void(const CommandHandler& commandHandler, std::vector<Parameter>)> function, const std::vector<ParameterType>& a_parameterTypes);
         /// @brief Adds a parameter to the command.
         /// @param a_param The parameter value to add to the command.
         void AddParameter(ParameterType a_param);
