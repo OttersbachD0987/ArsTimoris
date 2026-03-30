@@ -80,6 +80,12 @@ int main(int argc, char** argv) {
         SDL_FRect area;
         std::shared_ptr<ArsTimoris::Assets::TextureAsset> texture;
         size_t index;
+
+        NPCDisplay(SDL_FRect a_area, std::shared_ptr<ArsTimoris::Assets::TextureAsset> a_texture, size_t a_index) {
+            this->area = a_area;
+            this->texture = a_texture;
+            this->index = a_index;
+        }
     };
     std::vector<NPCDisplay> combatNPCs = std::vector<NPCDisplay>();
     
@@ -1177,10 +1183,10 @@ int main(int argc, char** argv) {
                             choice = 0;
                             gameState.menu = Menu::COMBAT;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
-                                combatNPCs.push_back(NPCDisplay{
+                                combatNPCs.push_back(NPCDisplay(
                                     SDL_FRect{20.0f + 40.0f * i, 30.0f, 40.0f, 60.0f}, 
                                     gameState.assets.textures.at("UIPanel"), i
-                                });
+                                ));
                             }
                             break;
                         }
