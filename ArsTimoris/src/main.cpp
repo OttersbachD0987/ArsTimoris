@@ -1052,9 +1052,54 @@ int main(int argc, char** argv) {
         }
     }));
 
+    commandHandler.AddCommand(ArsTimoris::Commands::Command("add_gold", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+        if (parameters.size() < 1) {
+            std::cout << "Not enough arguments." << std::endl;
+            return;
+        }
+
+        if (parameters[0].index() != ArsTimoris::Commands::ParameterType::INT) {
+            std::cout << "Expected integer for amount but got a different type." << std::endl;
+            return;
+        }
+
+        gameState.player.gold += std::get<int>(parameters[0]);
+    }));
+    commandHandler.commands[commandHandler.commands.size() - 1].AddParameter(ArsTimoris::Commands::ParameterType::INT);
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command("add_xp", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+        if (parameters.size() < 1) {
+            std::cout << "Not enough arguments." << std::endl;
+            return;
+        }
+
+        if (parameters[0].index() != ArsTimoris::Commands::ParameterType::INT) {
+            std::cout << "Expected integer for amount but got a different type." << std::endl;
+            return;
+        }
+        
+        gameState.player.xp += std::get<int>(parameters[0]);
+    }));
+    commandHandler.commands[commandHandler.commands.size() - 1].AddParameter(ArsTimoris::Commands::ParameterType::INT);
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command("add_turns", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+        if (parameters.size() < 1) {
+            std::cout << "Not enough arguments." << std::endl;
+            return;
+        }
+
+        if (parameters[0].index() != ArsTimoris::Commands::ParameterType::INT) {
+            std::cout << "Expected integer for amount but got a different type." << std::endl;
+            return;
+        }
+        
+        gameState.player.turns += std::get<int>(parameters[0]);
+    }));
+    commandHandler.commands[commandHandler.commands.size() - 1].AddParameter(ArsTimoris::Commands::ParameterType::INT);
+
     //commandHandler.AddCommand(Command("", [&](const CommandHandler& handler, std::vector<Parameter> parameters) {}));
 
-    commandHandler.AddCommand(ArsTimoris::Commands::Command("", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {}));
+    //commandHandler.AddCommand(ArsTimoris::Commands::Command("", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {}));
     #pragma endregion
 
     // Launch a separate thread to handle console input
