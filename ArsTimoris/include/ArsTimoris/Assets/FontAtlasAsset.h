@@ -5,7 +5,7 @@
 #include <ArsTimoris/Assets/Asset.h>
 #include <cstdint>
 
-namespace ArsTimoris::UI:Text {
+namespace ArsTimoris::UI::Text {
     struct FontAtlas;
 }
 
@@ -20,11 +20,11 @@ namespace ArsTimoris::Assets {
         FontAtlasAsset(std::string, std::string);
 
         /// @brief 
-        std::shared_ptr<ArsTimoris::UI:Text::FontAtlas> fontAtlas;
+        std::shared_ptr<ArsTimoris::UI::Text::FontAtlas> fontAtlas;
 
         /// @brief 
         /// @param  
-        void Load(std::string);
+        void Load(SDL_Renderer*, std::string);
         /// @brief 
         void Unload(void) override;
     };

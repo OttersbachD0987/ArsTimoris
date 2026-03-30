@@ -8,6 +8,7 @@
 #include <ArsTimoris/Assets/FontAsset.h>
 #include <ArsTimoris/Assets/TextureAsset.h>
 #include <ArsTimoris/Assets/LazyFontAsset.h>
+#include <ArsTimoris/Assets/FontAtlasAsset.h>
 
 namespace ArsTimoris {
     namespace UI {
@@ -22,9 +23,11 @@ namespace ArsTimoris {
             Assets(void);
 
             /// @brief 
-            std::unordered_map<std::string, std::shared_ptr<LazyFontAsset>> lazyFonts;
+            std::unordered_map<std::string, std::shared_ptr<FontAtlasAsset>> fontAtlases;
             /// @brief 
             std::unordered_map<std::string, std::shared_ptr<FontAsset>> fonts;
+            /// @brief 
+            std::unordered_map<std::string, std::shared_ptr<LazyFontAsset>> lazyFonts;
             /// @brief 
             std::unordered_map<std::string, std::shared_ptr<AudioAsset>> sounds;
             /// @brief 
@@ -37,6 +40,11 @@ namespace ArsTimoris {
             /// @param  
             /// @param  
             void AddTexture(SDL_Renderer*, std::string, std::string);
+            /// @brief 
+            /// @param a_renderer
+            /// @param a_path 
+            /// @param a_name 
+            void AddFontAtlas(SDL_Renderer* a_renderer, std::string a_path, std::string a_name);
             /// @brief 
             /// @param  
             /// @param  

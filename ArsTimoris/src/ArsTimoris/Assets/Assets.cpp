@@ -4,8 +4,9 @@
 namespace ArsTimoris::Assets {
     Assets::Assets(void) {
         textures = std::unordered_map<std::string, std::shared_ptr<TextureAsset>>();
-        lazyFonts = std::unordered_map<std::string, std::shared_ptr<LazyFontAsset>>();
+        fontAtlases = std::unordered_map<std::string, std::shared_ptr<FontAtlasAsset>>();
         fonts = std::unordered_map<std::string, std::shared_ptr<FontAsset>>();
+        lazyFonts = std::unordered_map<std::string, std::shared_ptr<LazyFontAsset>>();
         sounds = std::unordered_map<std::string, std::shared_ptr<AudioAsset>>();
     }   
 
@@ -16,6 +17,15 @@ namespace ArsTimoris::Assets {
         textures.emplace(std::piecewise_construct,
             std::forward_as_tuple(a_name), 
             std::forward_as_tuple(std::move(textureAsset)));
+    }
+
+    void Assets::AddFontAtlas(SDL_Renderer* a_renderer, std::string a_path, std::string a_name) {
+        std::println("FontAtlas: {} {}", a_path, a_name);
+        std::shared_ptr<FontAtlasAsset> fontAtlasAsset = std::make_shared<FontAtlasAsset>(a_name, a_name);
+        fontAtlasAsset->Load(a_renderer, a_path);
+        fontAtlases.emplace(std::piecewise_construct,
+            std::forward_as_tuple(a_name), 
+            std::forward_as_tuple(std::move(fontAtlasAsset)));
     }
 
     void Assets::AddFont(std::string a_path, std::string a_name, float a_pt) {

@@ -25,6 +25,7 @@
 #include <ArsTimoris/UI/UILazyTextComponent.h>
 #include <ArsTimoris/UI/UIImageComponent.h>
 #include <ArsTimoris/UI/UISliderComponent.h>
+#include <ArsTimoris/UI/UIAtlasTextComponent.h>
 #include <print>
 
 void PrintCombatNPCData(GameState& a_gameState, const NPCData& a_npc) {
@@ -113,6 +114,8 @@ int main(int argc, char** argv) {
         if (dir_entry.path().has_extension()) {
             if (dir_entry.path().extension().string() == ".png") {
                 gameState.assets.AddTexture(gameState.renderer, dir_entry.path().string(), dir_entry.path().stem().string());
+            } else if (dir_entry.path().extension().string() == ".fpng") {
+                gameState.assets.AddFontAtlas(gameState.renderer, dir_entry.path().string(), dir_entry.path().stem().string());
             } else if (dir_entry.path().extension().string() == ".ttf") {
                 gameState.assets.AddLazyFont(dir_entry.path().string(), dir_entry.path().stem().string());
 
@@ -129,6 +132,11 @@ int main(int argc, char** argv) {
             }
         }
     }
+    #pragma endregion
+
+    #pragma region Setup Vars
+    RoomInstance* room = nullptr;
+    int32_t choice;
     #pragma endregion
 
     #pragma region UI
@@ -156,6 +164,10 @@ int main(int argc, char** argv) {
         std::forward_as_tuple("Room Actions Menu"), 
         std::forward_as_tuple(std::string_view("Room Actions Menu"))
     );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Combat Menu"), 
+        std::forward_as_tuple(std::string_view("Combat Menu"))
+    );
 
     ArsTimoris::UI::UIElement* element;
     ArsTimoris::UI::UIElement* otherElement;
@@ -172,6 +184,8 @@ int main(int argc, char** argv) {
     roomMoveMenu->enabled = false;
     ArsTimoris::UI::UILayer* roomActionsMenu = &gameState.uiManager.uiLayers.at("Room Actions Menu");
     roomActionsMenu->enabled = false;
+    ArsTimoris::UI::UILayer* combatMenu = &gameState.uiManager.uiLayers.at("Combat Menu");
+    combatMenu->enabled = false;
 
     #pragma region Main Menu
     mainMenu->uiElements.emplace(std::piecewise_construct, 
@@ -198,13 +212,34 @@ int main(int argc, char** argv) {
         a_gameState.menu = Menu::NONE;
         return true;
     });
+    //element->components.emplace(std::piecewise_construct, 
+    //    std::forward_as_tuple("Text"), 
+    //    std::forward_as_tuple(
+    //        std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+    //            "Play",
+    //            "NotoSansMono-Regular",
+    //            36.0f,
+    //            6,
+    //            ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+    //        )
+    //    )
+    //).first->second->Hookup(gameState, mainMenu, element);
+
+    /*
+    \[FCB:11111111,11111111,11111111,11111111]
+    \[FCO:377,377,377,377]
+    \[FCD:255,255,255,255]
+    \[FCH:FF,FF,FF,FF]
+    \b
+    \n
+    */
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Play",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -235,10 +270,10 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Quit",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -288,7 +323,7 @@ int main(int argc, char** argv) {
             std::make_shared<ArsTimoris::UI::UISliderComponent>(
                 0.0f,
                 (float)(200 * GameState::Starts.size()),
-                1000.0f
+                992.0f
             )
         )
     ).first->second->Hookup(gameState, startsMenu, element);
@@ -296,7 +331,7 @@ int main(int argc, char** argv) {
     //otherElement = element;
     std::shared_ptr<ArsTimoris::UI::UISliderComponent> slider = std::dynamic_pointer_cast<ArsTimoris::UI::UISliderComponent>(element->components.at("Slider"));
 
-    element = startsMenu->uiElements.at("Main Panel").AddChild(std::string_view("Scroll"), ArsTimoris::UI::UIRect{{0, 0, (float)(200 * GameState::Starts.size()), 400}}).get();
+    element = startsMenu->uiElements.at("Main Panel").AddChild(std::string_view("ScrollClip"), ArsTimoris::UI::UIRect{{4, 4, 992, 392}})->AddChild(std::string_view("Scroll"), ArsTimoris::UI::UIRect{{0, 0, (float)(200 * GameState::Starts.size()), 392}}).get();
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -315,7 +350,7 @@ int main(int argc, char** argv) {
         static int32_t posX = 0;
         std::shared_ptr<ArsTimoris::UI::UIElement> pot = element->AddChild(
             std::string_view(a_startData.name), 
-            ArsTimoris::UI::UIRect{{(float)posX, 0, 200, 400}}
+            ArsTimoris::UI::UIRect{{(float)posX, 0, 200, 392}}
         );
         pot->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
@@ -328,7 +363,7 @@ int main(int argc, char** argv) {
         ).first->second->Hookup(gameState, startsMenu, pot.get());
         std::shared_ptr<ArsTimoris::UI::UIElement> motley = pot->AddChild(
             std::string_view("Name"), 
-            ArsTimoris::UI::UIRect{{0, 0, 200, 100}}
+            ArsTimoris::UI::UIRect{{0, 0, 200, 92}}
         );
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
@@ -342,10 +377,10 @@ int main(int argc, char** argv) {
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Text"), 
             std::forward_as_tuple(
-                std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                     a_startData.name,
-                    "NotoSansMono-Regular",
-                    24.0f,
+                    "BitCrusher",
+                    3.0f,
                     6,
                     ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
                 )
@@ -353,7 +388,7 @@ int main(int argc, char** argv) {
         ).first->second->Hookup(gameState, startsMenu, motley.get());
         motley = pot->AddChild(
             std::string_view("Description"), 
-            ArsTimoris::UI::UIRect{{0, 100, 200, 240}}
+            ArsTimoris::UI::UIRect{{0, 92, 200, 240}}
         );
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
@@ -367,18 +402,18 @@ int main(int argc, char** argv) {
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Text"), 
             std::forward_as_tuple(
-                std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                     a_startData.description,
-                    "NotoSansMono-Regular",
-                    16.0f,
-                    6,
-                    ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+                    "BitCrusher",
+                    3.0f,
+                    8,
+                    ArsTimoris::UI::UIAnchor::TOP_CENTER
                 )
             )
         ).first->second->Hookup(gameState, startsMenu, motley.get());
         motley = pot->AddChild(
             std::string_view("Play"), 
-            ArsTimoris::UI::UIRect{{0, 340, 200, 60}}
+            ArsTimoris::UI::UIRect{{0, 332, 200, 60}}
         );
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
@@ -401,10 +436,10 @@ int main(int argc, char** argv) {
         motley->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Text"), 
             std::forward_as_tuple(
-                std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                     "Play",
-                    "NotoSansMono-Regular",
-                    36.0f,
+                    "BitCrusher",
+                    4.0f,
                     6,
                     ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
                 )
@@ -501,17 +536,18 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, roomGeneralMenu, element);
     element->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
         a_uiLayer->enabled = false;
-        startsMenu->enabled = true; 
+        roomMoveMenu->enabled = true; 
         gameState.menu = Menu::MOVING;
+        choice = 0;
         return true;
     });
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Move",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -544,10 +580,10 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Actions",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -580,10 +616,10 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Stats",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -616,10 +652,10 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Inventory",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -653,10 +689,10 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Quit",
-                "NotoSansMono-Regular",
-                36.0f,
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -681,7 +717,7 @@ int main(int argc, char** argv) {
         )
     ).first->second->Hookup(gameState, roomGeneralMenu, element);
 
-    otherElement = element->AddChild("HP", ArsTimoris::UI::UIRect{{10, 10, 120, 55}}).get();
+    otherElement = element->AddChild("HP", ArsTimoris::UI::UIRect{{5, 5, 140, 40}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -694,18 +730,19 @@ int main(int argc, char** argv) {
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                " HP: 100/100",
-                "NotoSansMono-Regular",
-                14.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "HP: 100/100",
+                "BitCrusher",
+                2.0f,
+                8,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
             )
         )
     ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> hpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(otherElement->components.at("Text"));
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> hpText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
-    otherElement = element->AddChild("MP", ArsTimoris::UI::UIRect{{10, 75, 120, 55}}).get();
+    otherElement = element->AddChild("MP", ArsTimoris::UI::UIRect{{5, 50, 140, 40}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -718,18 +755,19 @@ int main(int argc, char** argv) {
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                " MP: 100/100",
-                "NotoSansMono-Regular",
-                14.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "MP: 100/100",
+                "BitCrusher",
+                2.0f,
+                8,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
             )
         )
     ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> mpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(otherElement->components.at("Text"));
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> mpText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
-    otherElement = element->AddChild("AC", ArsTimoris::UI::UIRect{{140, 10, 100, 55}}).get();
+    otherElement = element->AddChild("AC", ArsTimoris::UI::UIRect{{150, 5, 100, 40}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -742,18 +780,19 @@ int main(int argc, char** argv) {
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                " AC: 10",
-                "NotoSansMono-Regular",
-                14.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "AC: 10",
+                "BitCrusher",
+                2.0f,
+                8,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
             )
         )
     ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> acText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(otherElement->components.at("Text"));
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> acText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
-    otherElement = element->AddChild("GP", ArsTimoris::UI::UIRect{{140, 75, 100, 55}}).get();
+    otherElement = element->AddChild("GP", ArsTimoris::UI::UIRect{{5, 95, 140, 40}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -766,27 +805,28 @@ int main(int argc, char** argv) {
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                " GP: 1000",
-                "NotoSansMono-Regular",
-                14.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "GP: 1000",
+                "BitCrusher",
+                2.0f,
+                8,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
             )
         )
     ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> gpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(otherElement->components.at("Text"));
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> gpText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     #pragma endregion
 
     #pragma region Room Move
     roomMoveMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Move"), 
+        std::forward_as_tuple("Enter"), 
         std::forward_as_tuple(
-            std::string_view("Move"), 
+            std::string_view("Enter"), 
             ArsTimoris::UI::UIRect{{0, 740, 240, 60}}
         )
     );
-    element = &roomMoveMenu->uiElements.at("Move");
+    element = &roomMoveMenu->uiElements.at("Enter");
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -798,17 +838,21 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, roomMoveMenu, element);
     element->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
         a_uiLayer->enabled = false;
-        startsMenu->enabled = true; 
-        gameState.menu = Menu::MOVING;
+        roomGeneralMenu->enabled = true; 
+        gameState.menu = Menu::NONE;
+        if (room->connections[choice].CanPass(gameState)) {
+            room->connections[choice].Passes(gameState);
+            gameState.curRoom = room->connections[choice].destination;
+        }
         return true;
     });
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                "Move",
-                "NotoSansMono-Regular",
-                36.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Enter",
+                "BitCrusher",
+                4.0f,
                 6,
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
@@ -816,13 +860,13 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, roomMoveMenu, element);
 
     roomMoveMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Move"), 
+        std::forward_as_tuple("Label"), 
         std::forward_as_tuple(
-            std::string_view("Move"), 
-            ArsTimoris::UI::UIRect{{0, 740, 240, 60}}
+            std::string_view("Label"), 
+            ArsTimoris::UI::UIRect{{0, 300, 240, 60}}
         )
     );
-    element = &roomMoveMenu->uiElements.at("Move");
+    element = &roomMoveMenu->uiElements.at("Label");
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -835,16 +879,111 @@ int main(int argc, char** argv) {
     element->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UILazyTextComponent>(
-                " HP: 100/100",
-                "NotoSansMono-Regular",
-                14.0f,
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "2/2",
+                "BitCrusher",
+                2.0f,
                 6,
-                ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
     ).first->second->Hookup(gameState, roomMoveMenu, element);
-    //std::shared_ptr<ArsTimoris::UI::UILazyTextComponent> hpText = std::dynamic_pointer_cast<ArsTimoris::UI::UILazyTextComponent>(element->components.at("Text"));
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> labelText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    #pragma endregion
+
+    #pragma region Combat
+    combatMenu->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Top Action"), 
+        std::forward_as_tuple(
+            std::string_view("Top Action"), 
+            ArsTimoris::UI::UIRect{{720, 410, 260, 50}}
+        )
+    );
+    element = &combatMenu->uiElements.at("Top Action");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Scallion",
+                "BitCrusher",
+                2.0f,
+                6,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> topActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    
+    combatMenu->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Middle Action"), 
+        std::forward_as_tuple(
+            std::string_view("Middle Action"), 
+            ArsTimoris::UI::UIRect{{700, 470, 300, 60}}
+        )
+    );
+    element = &combatMenu->uiElements.at("Middle Action");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Scallion",
+                "BitCrusher",
+                3.0f,
+                6,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> middleActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    
+    combatMenu->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Bottom Action"), 
+        std::forward_as_tuple(
+            std::string_view("Bottom Action"), 
+            ArsTimoris::UI::UIRect{{720, 540, 260, 50}}
+        )
+    );
+    element = &combatMenu->uiElements.at("Bottom Action");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Scallion",
+                "BitCrusher",
+                2.0f,
+                6,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
     #pragma endregion
     #pragma endregion
 
@@ -852,8 +991,6 @@ int main(int argc, char** argv) {
         gameState.uiManager.Recalculate(gameState);
     }
 
-    RoomInstance* room = nullptr;
-    uint32_t choice;
     size_t encounter;
     bool runEncounter = false;
     SDL_Event event;
@@ -913,6 +1050,37 @@ int main(int argc, char** argv) {
                     }
                     break;
                 case SDL_EVENT_KEY_DOWN:
+                    switch (gameState.screen) {
+                        case Screen::GAME: {
+                            switch (gameState.menu) {
+                                case Menu::MOVING: {
+                                    if (event.key.key == SDLK_A) {
+                                        if (--choice < 0) {
+                                            choice = gameState.rooms[gameState.curRoom].connections.size() - 1;
+                                        }
+                                    } else if (event.key.key == SDLK_D) {
+                                        if (++choice >= gameState.rooms[gameState.curRoom].connections.size()) {
+                                            choice = 0;
+                                        }
+                                    }
+                                    break;
+                                }
+                                case Menu::COMBAT: {
+                                    if (event.key.key == SDLK_UP) {
+                                        if (--choice < 0) {
+                                            choice = gameState.player.actions.size() - 1;
+                                        }
+                                    } else if (event.key.key == SDLK_DOWN) {
+                                        if (++choice >= gameState.player.actions.size()) {
+                                            choice = 0;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
                     break;
             }
         }
@@ -931,7 +1099,7 @@ int main(int argc, char** argv) {
                 
                 std::cout << "\nOption: ";
 
-                SafeInput<uint32_t>(choice);
+                SafeInput<int32_t>(choice);
 
                 if (--choice < GameState::Starts.size()) {
                     gameState.screen = Screen::GAME;
@@ -960,6 +1128,9 @@ int main(int argc, char** argv) {
 
                         room = &gameState.rooms[gameState.curRoom];
                         if (room->inhabitants.size() > 0 && !gameState.debug.noFights) {
+                            roomGeneralMenu->enabled = false;
+                            combatMenu->enabled = true;
+                            choice = 0;
                             gameState.menu = Menu::COMBAT;
                             break;
                         }
@@ -974,7 +1145,7 @@ int main(int argc, char** argv) {
                         
                         /*
                         std::cout << "\nActions:\n1) Move\n2) Actions\n3) Stats\n4) Inventory\n5) Quit\n\nOption: ";
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
                         switch (choice) {
                             case 1:
                                 gameState.menu = Menu::MOVING;
@@ -996,7 +1167,7 @@ int main(int argc, char** argv) {
                                 if (gameState.debug.enabled) {
                                     int32_t number = 0;
                                     std::cout << "\x1b[1mDebug Menu (EDIT)\x1b[22m\n1) Change Gold\n2) Change XP\n3) Back\n\nOption: ";
-                                    SafeInput<uint32_t>(choice);
+                                    SafeInput<int32_t>(choice);
                                     switch (choice) {
                                         case 1:
                                             std::cout << "Gold to add: ";
@@ -1018,7 +1189,7 @@ int main(int argc, char** argv) {
                                 if (gameState.debug.enabled) {
                                     int32_t number = 0;
                                     std::cout << "\x1b[1mDebug Menu (INFO)\x1b[22m\n1) View Classes\n2) View Encounters\n3) View Entity Templates\n4) Back\n\nOption: ";
-                                    SafeInput<uint32_t>(choice);
+                                    SafeInput<int32_t>(choice);
                                     switch (choice) {
                                         case 1:
                                             for (std::pair<std::string, ClassData> classPair : GameData::CLASSES) {
@@ -1061,7 +1232,7 @@ int main(int argc, char** argv) {
                                 if (gameState.debug.enabled) {
                                     int32_t number = 0;
                                     std::cout << std::format("\x1b[1mDebug Menu (FLAG)\x1b[22m\n1) {}No Fights\x1b[39m\n2) ERR\n3) Back\n\nOption: ", (gameState.debug.noFights ? "\x1b[32m" : "\x1b[31m"));
-                                    SafeInput<uint32_t>(choice);
+                                    SafeInput<int32_t>(choice);
                                     switch (choice) {
                                         case 1:
                                             gameState.debug.noFights = !gameState.debug.noFights;
@@ -1084,13 +1255,15 @@ int main(int argc, char** argv) {
                     }
                     case Menu::MOVING: {
                         room = &gameState.rooms[gameState.curRoom];
+                        labelText->SetText(gameState, &roomMoveMenu->uiElements.at("Label"), std::format("{}/{}) [{}] \\[FCH:{}]{}\b\b\b\\[FCH:AA,0B,C3,CF]boo", choice + 1, room->connections.size(), room->connections[choice].destination, (gameState.rooms[room->connections[choice].destination].initialized ? "FF,00,00" : "00,FF,00"), GameData::ROOM_DATA[gameState.rooms[room->connections[choice].destination].roomID].roomName));
+                        /*
                         std::cout << "-------------------------------\nRooms:\n";
                         for (size_t connectionIndex = 0; connectionIndex < room->connections.size();) {
                             std::cout << ++connectionIndex << ") [" << room->connections[connectionIndex - 1].destination  << "] \x1b[38;5;" << (gameState.rooms[room->connections[connectionIndex - 1].destination].initialized ? "8m" : "15m") << GameData::ROOM_DATA[gameState.rooms[room->connections[connectionIndex - 1].destination].roomID].roomName << "\x1b[39m\n";
                         }
                         std::cout << (room->connections.size() + 1) << ") Back\n\nOption: ";
 
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
 
                         if (--choice < room->connections.size()) {
                             if (room->connections[choice].CanPass(gameState)) {
@@ -1101,6 +1274,7 @@ int main(int argc, char** argv) {
                         } else if (choice == room->connections.size()) {
                             gameState.menu = Menu::NONE;
                         }
+                        */
                         break;
                     }
                     case Menu::ROOM_ACTIONS: {
@@ -1111,7 +1285,7 @@ int main(int argc, char** argv) {
                         }
                         std::cout << (room->roomActions.size() + 1) << ") Back\n\nOption: ";
 
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
 
                         if (--choice < room->roomActions.size()) {
                             if (room->roomActions[choice].condition(gameState)) {
@@ -1153,7 +1327,7 @@ int main(int argc, char** argv) {
                             
                         std::cout << "\nOptions:\n1) Level Up\n2) Back\n\nOption: ";
 
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
 
                         switch (choice) {
                             case 1:
@@ -1187,7 +1361,7 @@ int main(int argc, char** argv) {
                             
                         std::cout << accum << ") Back\n\nOption: ";
 
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
 
                         if (--choice < GameData::CLASSES.size()) {
                             const ClassData& classRef = GameData::CLASSES.at(classics[choice]);
@@ -1219,7 +1393,7 @@ int main(int argc, char** argv) {
                         }
                         std::cout << (gameState.player.items.size() + 1) << ") Back\n\nOption: ";
 
-                        SafeInput<uint32_t>(choice);
+                        SafeInput<int32_t>(choice);
 
                         if (--choice < gameState.player.items.size()) {
                             size_t itemIndex = choice;
@@ -1230,7 +1404,7 @@ int main(int argc, char** argv) {
                                 std::cout << "- " << modPair.first << ": " << modPair.second << "\n";
                             }
                             std::cout << "\n1) Use\n2) " << (gameState.player.equipped[itemIndex] ? "Unequip" : "Equip") << "\n3) Back\n\nOption: ";
-                            SafeInput<uint32_t>(choice);
+                            SafeInput<int32_t>(choice);
                             switch (choice) {
                                 case 1:
                                     if (itemType.usage.usage != nullptr) {
@@ -1254,6 +1428,11 @@ int main(int argc, char** argv) {
                     }
                     case Menu::COMBAT: {
                         room = &gameState.rooms[gameState.curRoom];
+                        topActionText->SetText(gameState, &combatMenu->uiElements.at("Top Action"), std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
+                        middleActionText->SetText(gameState, &combatMenu->uiElements.at("Middle Action"), std::format("{}", gameState.player.actions[choice].name));
+                        bottomActionText->SetText(gameState, &combatMenu->uiElements.at("Bottom Action"), std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
+
+                        /*
                         if (room->inhabitants.size() > 0) {
                             bool enemiesGo = true;
                             std::cout << "-------------------------------\nOpponents:\n";
@@ -1267,7 +1446,7 @@ int main(int argc, char** argv) {
                             }
                             std::cout << "\nOption: ";
 
-                            SafeInput<uint32_t>(choice);
+                            SafeInput<int32_t>(choice);
 
                             if (--choice < gameState.player.actions.size()) {
                                 size_t action = choice;
@@ -1277,7 +1456,7 @@ int main(int argc, char** argv) {
                                     PrintCombatNPCData(gameState, room->inhabitants[npcIndex]);
                                 }
                                 std::cout << (room->inhabitants.size() + 1)  << ") Yourself\n- HP [" << gameState.player.curHP << "/" << gameState.player.maxHP << "]\n- Mana [" << gameState.player.curMana << "/" << gameState.player.maxMana << "]\n"<< (room->inhabitants.size() + 2)  << ") Back\n\nOption: ";
-                                SafeInput<uint32_t>(choice);
+                                SafeInput<int32_t>(choice);
                                 if (--choice < room->inhabitants.size()) {
                                     std::cout << "-------------------------------\n";
                                     if (gameState.player.actions[action].condition == nullptr || gameState.player.actions[action].condition(gameState, &gameState.player, &room->inhabitants[choice])) {
@@ -1352,6 +1531,7 @@ int main(int argc, char** argv) {
                         } else {
                             gameState.menu = Menu::NONE;
                         }
+                            */
                         break;
                     }
                 }
@@ -1417,7 +1597,7 @@ int main(int argc, char** argv) {
                 }
 
                 std::cout << "-------------------------------\n1) Title Screen\n2) Quit\n------------------------------\n\nOption: ";
-                SafeInput<uint32_t>(choice);
+                SafeInput<int32_t>(choice);
                 switch (choice) {
                     case 1:
                         gameState.screen = Screen::TITLE;
