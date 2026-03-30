@@ -1633,6 +1633,10 @@ int main(int argc, char** argv) {
                                     room = &gameState.rooms[gameState.curRoom];
                                 }
 
+                                for (size_t i = 0; i < combatNPCs.size(); ++i) {
+                                    combatNPCs[i].index = i;
+                                }
+
                                 if (gameState.player.curHP <= 0) {
                                     std::cout << "\nYou collapse to the floor, dead." << std::endl;
                                     gameState.screen = Screen::GAME_OVER;
