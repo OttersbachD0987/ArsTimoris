@@ -802,6 +802,31 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> acText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
+    otherElement = element->AddChild("XP", ArsTimoris::UI::UIRect{{150, 50, 100, 40}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "XP: 10",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+            )
+        )
+    ).first->second->Hookup(gameState, roomGeneralMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> xpText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    
     otherElement = element->AddChild("GP", ArsTimoris::UI::UIRect{{5, 95, 140, 40}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
