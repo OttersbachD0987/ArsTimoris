@@ -45,9 +45,9 @@ void SafeInput(T& a_value) {
 
 /// @brief Eat one input on the same line, works like sys("pause") on windows.
 inline void EatInput() {
-    std::cout << "Press any key to continue..." << std::flush;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
-    std::cout << "\x1B[F\x1B[0K\r" << std::flush;
+    //std::cout << "Press any key to continue..." << std::flush;
+    //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); 
+    //std::cout << "\x1B[F\x1B[0K\r" << std::flush;
 }
 
 #endif

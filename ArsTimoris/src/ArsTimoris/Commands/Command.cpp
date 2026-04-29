@@ -44,6 +44,7 @@ namespace ArsTimoris::Commands {
     void Command::Tokenize(std::istringstream& a_stream, std::vector<Parameter>& a_parameters) {
         bool inQuotes = false;
         bool hasBeenString = false;
+        bool onFirst = true;
 
         std::string currentParam = "";
 
@@ -62,10 +63,11 @@ namespace ArsTimoris::Commands {
             if (c == ' ' && !inQuotes && currentParam != "") {
                 if (currentParam != "") {
                     // Add the parameter to the result, make sure to parse the correct type
-                    if (hasBeenString) {
+                    if (hasBeenString || onFirst) {
                         a_parameters.push_back(Parameter(currentParam));
                         //std::cout << "Pushed string: " << currentParam << std::endl;
                         hasBeenString = false;
+                        onFirst = false;
                     } else if (currentParam == "true" || currentParam == "false") {
                         a_parameters.push_back(Parameter(currentParam == "true"));
                         //std::cout << "Pushed bool: " << currentParam << std::endl;
@@ -94,7 +96,7 @@ namespace ArsTimoris::Commands {
 
         // Push the last parameter if any
         if (!currentParam.empty()) {
-            if (hasBeenString) {
+            if (hasBeenString || onFirst) {
                 a_parameters.push_back(Parameter(currentParam));
             } else if (currentParam == "true" || currentParam == "false") {
                 a_parameters.push_back(Parameter(currentParam == "true"));

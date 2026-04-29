@@ -70,6 +70,8 @@ public:
     ArsTimoris::UI::UIManager uiManager;
     InputData inputData;
 
+    std::vector<std::string> messageStack;
+
     GameState(std::mt19937 a_generator, const Interpreter& a_interpreter);
 
     void CacheInputState(void);
@@ -89,6 +91,10 @@ public:
     size_t GetRandomEncounter(void);
 
     void InitializeRoom(RoomInstance* const a_roomInstance);
+
+    void AddMessage(std::string a_message);
+
+    void AppendMessage(std::string a_message);
 };
 
 #include <ArsTimoris/Game/GameData.h>

@@ -90,7 +90,9 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                     std::cout << "and misses with a " << result << " (" << roll << " + " << modifier << ").\n" << std::endl;
                 }
 
-                EatInput();
+                std::cout << "Prae Nom" << std::endl;
+                //EatInput();
+                std::cout << "Post Nom" << std::endl;
 
                 if (player != nullptr) {
                     ++player->usedTurns;

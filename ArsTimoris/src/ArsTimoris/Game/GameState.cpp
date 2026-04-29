@@ -12,6 +12,7 @@ GameState::GameState(std::mt19937 a_generator, const Interpreter& a_interpreter)
     this->rooms = std::vector<RoomInstance>();
     this->player = PlayerData(EntityTemplate("Player", 100, 30, 5, 10, {}, {Action {"Example", [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) { return true; }, [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) {}}}));
     this->inputData = InputData{};
+    this->messageStack = std::vector<std::string>();
 }
 
 void GameState::CacheInputState(void) {
@@ -185,6 +186,19 @@ void GameState::InitializeRoom(RoomInstance* const a_roomInstance) {
         }
     }
     rooms[roomIndex].connections = newConnections;
+}
+
+
+void GameState::AddMessage(std::string a_message) {
+    messageStack.push_back(a_message);
+}
+    
+void GameState::AppendMessage(std::string a_message) {
+    if (messageStack.size() == 0) {
+        messageStack.push_back(a_message);
+    } else {
+        messageStack[messageStack.size() - 1] += a_message;
+    }
 }
 
 std::vector<StartData> GameState::Starts = {};

@@ -186,6 +186,10 @@ int main(int argc, char** argv) {
         std::forward_as_tuple("Combat Menu"), 
         std::forward_as_tuple(std::string_view("Combat Menu"))
     );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Message Overlay"), 
+        std::forward_as_tuple(std::string_view("Message Overlay"))
+    );
 
     ArsTimoris::UI::UIElement* element;
     ArsTimoris::UI::UIElement* otherElement;
@@ -204,6 +208,10 @@ int main(int argc, char** argv) {
     roomActionsMenu->enabled = false;
     ArsTimoris::UI::UILayer* combatMenu = &gameState.uiManager.uiLayers.at("Combat Menu");
     combatMenu->enabled = false;
+
+    
+    ArsTimoris::UI::UILayer* messageOverlay = &gameState.uiManager.uiLayers.at("Message Overlay");
+    messageOverlay->enabled = false;
 
     #pragma region Main Menu
     mainMenu->uiElements.emplace(std::piecewise_construct, 
@@ -1028,6 +1036,39 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, combatMenu, element);
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
     #pragma endregion
+
+    #pragma region Message Overlay
+    messageOverlay->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Message Action"), 
+        std::forward_as_tuple(
+            std::string_view("Message Action"), 
+            ArsTimoris::UI::UIRect{{300, 200, 800, 500}}
+        )
+    );
+    element = &messageOverlay->uiElements.at("Message Action");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, messageOverlay, element);
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Scallion",
+                "BitCrusher",
+                3.0f,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, messageOverlay, element);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> messageText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    #pragma endregion
     #pragma endregion
 
     if (gameState.uiManager.dirtyRecalculate) {
@@ -1114,23 +1155,30 @@ int main(int argc, char** argv) {
 
     // Launch a separate thread to handle console input
     std::thread inputThread([&]() {
-        std::string command;
+        std::string command = "";
         while (gameState.running) {
             std::getline(std::cin, command);
+
+            if (command.empty()) {
+                continue;
+            }
 
             // Process the command
             // Trim leading and trailing whitespace
             command = command.substr(command.find_first_not_of(" \t\r\n"));
-            if (command.length() == 0) {
+            if (command.empty()) {
                 continue;
             }
             command = command.substr(0, command.find_last_not_of(" \t\r\n") + 1);
 
             // Split the command by whitespace
-            std::vector<ArsTimoris::Commands::Parameter> tokens;
-            std::string token;
-            std::istringstream tokenStream(command);
+            std::vector<ArsTimoris::Commands::Parameter> tokens = std::vector<ArsTimoris::Commands::Parameter>();
+            std::istringstream tokenStream =  std::istringstream(command);
             ArsTimoris::Commands::Command::Tokenize(tokenStream, tokens);
+
+            if (tokens.empty()) {
+                continue;
+            }
 
             // Process the initializer
             std::string initializer = std::get<std::string>(tokens[0]);
@@ -1140,6 +1188,8 @@ int main(int argc, char** argv) {
         }
     });
 
+    bool messageOpen = false;
+
     while (gameState.running) {
         //std::cout << "Very Start" << std::endl;
         deltaTime = SDL_GetTicks() - lastTime;
@@ -1147,6 +1197,10 @@ int main(int argc, char** argv) {
         //std::cout << "Prae Cache Input" << std::endl;
         gameState.CacheInputState();
         //std::cout << "Post Cache Input" << std::endl;
+        if (gameState.messageStack.size() > 0 && !messageOverlay->enabled) {
+            messageOverlay->enabled = true;
+            messageText->SetText(gameState, &messageOverlay->uiElements.at("Message Action"), gameState.messageStack[0]);
+        }
         while (SDL_PollEvent(&event)) {
             gameState.inputData.mouse = SDL_GetMouseState(&gameState.inputData.mousePos.x, &gameState.inputData.mousePos.y);
             switch (event.type) {
@@ -1156,14 +1210,26 @@ int main(int argc, char** argv) {
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     switch (event.button.button) {
                         case SDL_BUTTON_LEFT:
-                            if (!gameState.uiManager.OnMouseLeftDown(gameState, &gameState.inputData.mousePos)) {
+                            if (messageOverlay->enabled) {
+                                gameState.messageStack.erase(gameState.messageStack.begin());
+                                if (gameState.messageStack.size() <= 0) {
+                                    messageOverlay->enabled = false;
+                                } else {
+                                    messageText->SetText(gameState, &messageOverlay->uiElements.at("Message Action"), gameState.messageStack[0]);
+                                }
+                            } else if (!gameState.uiManager.OnMouseLeftDown(gameState, &gameState.inputData.mousePos)) {
                                 switch (gameState.menu) {
                                     case Menu::COMBAT: {
                                         for (const NPCDisplay& npc : combatNPCs) {
                                             if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
+                                                room = &gameState.rooms[gameState.curRoom];
+                                                //std::println("Bongo 1 go ({})", choice);
                                                 if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &room->inhabitants[npc.index])) {
+                                                    //std::println("Bongo 2 go ({})", npc.index);
                                                     gameState.player.actions[choice].action(gameState, &gameState.player, &room->inhabitants[npc.index]);
+                                                    //std::println("Bongo 3 go");
                                                 }
+                                                break;
                                             }
                                         }
                                         break;
@@ -1590,6 +1656,10 @@ int main(int argc, char** argv) {
                     case Menu::COMBAT: {
                         room = &gameState.rooms[gameState.curRoom];
                         
+                        if (messageOverlay->enabled) {
+                            break;
+                        }
+
                         if (room->inhabitants.size() > 0) {
                             topActionText->SetText(gameState, &combatMenu->uiElements.at("Top Action"), std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
                             middleActionText->SetText(gameState, &combatMenu->uiElements.at("Middle Action"), std::format("{}", gameState.player.actions[choice].name));
@@ -1864,6 +1934,14 @@ int main(int argc, char** argv) {
                             //std::println("FREE {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
                             SDL_RenderFillRect(gameState.renderer, &fillBack);
                             fillBack.y += fillBack.h + 2;
+                        }
+
+                        SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
+                        //std::println("Combat NPCS: {}", combatNPCs.size());
+                        for (int32_t i = combatNPCs.size() - 1; i >= 0; --i) {
+                            //std::println("({}, {}, {}, {}) {}", combatNPCs[i].area.x, combatNPCs[i].area.y, combatNPCs[i].area.w, combatNPCs[i].area.h, i);
+                            //SDL_RenderFillRect(gameState.renderer, &combatNPCs[i].area);
+                            SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
                         }
 
                         //SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
