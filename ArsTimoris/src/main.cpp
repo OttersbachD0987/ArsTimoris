@@ -176,6 +176,10 @@ int main(int argc, char** argv) {
     #pragma region Setup Vars
     RoomInstance* room = nullptr;
     int32_t choice;
+    std::vector<std::string> classNames = std::vector<std::string>();
+    for (std::pair<std::string, ClassData> paired : GameData::CLASSES) {
+        classNames.push_back(paired.first);
+    }
     #pragma endregion
 
     struct InventoryRow {
@@ -221,6 +225,10 @@ int main(int argc, char** argv) {
         std::forward_as_tuple(std::string_view("Combat Menu"))
     );
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Level Menu"), 
+        std::forward_as_tuple(std::string_view("Level Menu"))
+    );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Stats Menu"), 
         std::forward_as_tuple(std::string_view("Stats Menu"))
     );
@@ -251,6 +259,8 @@ int main(int argc, char** argv) {
     combatMenu->enabled = false;
     ArsTimoris::UI::UILayer* statsMenu = &gameState.uiManager.uiLayers.at("Stats Menu");
     statsMenu->enabled = false;
+    ArsTimoris::UI::UILayer* levelMenu = &gameState.uiManager.uiLayers.at("Level Menu");
+    levelMenu->enabled = false;
     ArsTimoris::UI::UILayer* inventoryMenu = &gameState.uiManager.uiLayers.at("Inventory Menu");
     inventoryMenu->enabled = false;
 
@@ -284,8 +294,6 @@ int main(int argc, char** argv) {
             }
         }
     };
-
-    
 
     #pragma region Main Menu
     mainMenu->uiElements.emplace(std::piecewise_construct, 
@@ -1302,6 +1310,35 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, statsMenu, otherElement);
     classesText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
+    otherElement = element->AddChild("Levels", ArsTimoris::UI::UIRect{{5, 555, 600, 40}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, statsMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Level Up",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, statsMenu, otherElement);
+    otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
+        levelMenu->enabled = true;
+        gameState.menu = Menu::LEVEL_UP;
+        return true;
+    });
+
     otherElement = element->AddChild("Skills", ArsTimoris::UI::UIRect{{600, 5, 600, 590}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
@@ -1326,6 +1363,190 @@ int main(int argc, char** argv) {
         )
     ).first->second->Hookup(gameState, statsMenu, otherElement);
     skillsText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    #pragma endregion
+
+    #pragma region Level Menu
+    levelMenu->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("LevelPanel"), 
+        std::forward_as_tuple(
+            std::string_view("LevelPanel"), 
+            ArsTimoris::UI::UIRect{{0, 140, 1200, 600}}
+        )
+    );
+    element = &levelMenu->uiElements.at("LevelPanel");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, element);
+
+    //Header: "{} ({}/{})"
+    //Description: "{}"
+    //Cost: "{}"
+
+    std::function<void(void)> UpdateLevelUp;
+    int32_t classChoice = 0;
+
+    otherElement = element->AddChild("Index", ArsTimoris::UI::UIRect{{5, 5, 195, 55}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "1/1",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> classIndexText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    otherElement = element->AddChild("Header", ArsTimoris::UI::UIRect{{205, 5, 790, 55}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Test Class (0/1)",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> headerClassText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    otherElement = element->AddChild("Level", ArsTimoris::UI::UIRect{{1000, 5, 195, 55}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Level",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
+        const ClassData& classRef = GameData::CLASSES.at(classNames[classChoice]);
+        size_t levelToUseRedone = (gameState.player.classes.contains(classRef.name) ? (gameState.player.classes.at(classRef.name).level + 1) : 1);
+        if (classRef.levels.size() < levelToUseRedone) {
+            std::cout << "Already max level." << std::endl;
+        } else  {
+            if (classRef.levels[levelToUseRedone - 1].applicable == nullptr || classRef.levels[levelToUseRedone - 1].applicable(gameState, gameState.player)) {
+                for (size_t levelUpEffect = 0; levelUpEffect < classRef.levels[levelToUseRedone - 1].levelUpEffects.size(); ++levelUpEffect) {
+                    classRef.levels[levelToUseRedone - 1].levelUpEffects[levelUpEffect](gameState, gameState.player, false);
+                }
+
+                if (gameState.player.classes.contains(classRef.name)) {
+                    ++gameState.player.classes.at(classRef.name).level;
+                } else {
+                    gameState.player.classes.insert(std::pair<std::string, ClassInstance>(classRef.name, ClassInstance(classRef.name, 1)));
+                }
+                UpdateLevelUp();
+            }
+        }
+        return true;
+    });
+
+    otherElement = element->AddChild("Description", ArsTimoris::UI::UIRect{{5, 60, 990, 530}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "A simple class.",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> descriptionOfClassText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    otherElement = element->AddChild("Cost", ArsTimoris::UI::UIRect{{100, 60, 990, 190}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Requires stuff.",
+                "BitCrusher",
+                2.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, levelMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> costlyClassText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    UpdateLevelUp = [&](void) {
+        const ClassData& classData = GameData::CLASSES.at(classNames[classChoice]);
+        classIndexText->SetText(gameState, std::format("{:>2}/{:<2}", classChoice + 1, classNames.size()));
+        headerClassText->SetText(gameState, std::format("{} ({}/{})", classData.name, (gameState.player.classes.contains(classData.name) ? (gameState.player.classes.at(classData.name).level) : 0), classData.levels.size()));
+        descriptionOfClassText->SetText(gameState, classData.description);
+        size_t levelToUse = (gameState.player.classes.contains(classData.name) ? (gameState.player.classes.at(classData.name).level + 1) : 1);
+        //std::cout << "Level: " << levelToUse << " : " << classPair.second.levels.size() << std::endl;
+        if (classData.levels.size() >= levelToUse && classData.levels[--levelToUse].displayRequirements != nullptr) {
+            costlyClassText->SetText(gameState, std::format("\\[FCH:{}]{}"), ((classData.levels[levelToUse].applicable == nullptr || classData.levels[levelToUse].applicable(gameState, gameState.player)) ? "00,FF,00" : "FF,00,00"), classData.levels[levelToUse].displayRequirements(gameState, gameState.player));
+        }
+    };
     #pragma endregion
 
     #pragma region Inventory Menu
@@ -1763,6 +1984,25 @@ int main(int argc, char** argv) {
                                     }
                                     break;
                                 }
+                                case Menu::LEVEL_UP: {
+                                    if (!messageOverlay->enabled) {
+                                        if (event.key.key == SDLK_ESCAPE) {
+                                            levelMenu->enabled = false;
+                                            gameState.menu = Menu::STATS;
+                                        } else if (event.key.key == SDLK_A) {
+                                            if (--classChoice < 0) {
+                                                classChoice = classNames.size() - 1;
+                                            }
+                                            UpdateLevelUp();
+                                        } else if (event.key.key == SDLK_D) {
+                                            if (++classChoice >= classNames.size()) {
+                                                classChoice = 0;
+                                            }
+                                            UpdateLevelUp();
+                                        }
+                                    }
+                                    break;
+                                }
                                 case Menu::INVENTORY: {
                                     if (event.key.key == SDLK_ESCAPE) {
                                         inventoryMenu->enabled = false;
@@ -2080,6 +2320,7 @@ int main(int argc, char** argv) {
                         break;
                     }
                     case Menu::LEVEL_UP: {
+                        /*
                         std::cout 
                             << "-------------------------------\nXP: " 
                             << gameState.player.xp
@@ -2124,6 +2365,7 @@ int main(int argc, char** argv) {
                         } else if (choice == GameData::CLASSES.size()) {
                             gameState.menu = Menu::STATS;
                         }
+                        */
                         break;
                     }
                     case Menu::INVENTORY: {

@@ -1,4 +1,5 @@
 #include <ArsTimoris/Game/GameData.h>
+#include <format>
 
 std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
     {
@@ -502,7 +503,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
             {
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 10 xp.";
+                        return "Have at least 10 xp.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 10;
@@ -520,7 +521,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                 },
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 7 xp.";
+                        return "Have at least 7 xp.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 7;
@@ -536,7 +537,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                 },
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 18 xp.";
+                        return "Have at least 18 xp.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 18;
@@ -561,7 +562,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
             {
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 10 xp and 75 maximum mana.";
+                        return "Have at least 10 xp and 75 maximum mana.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 10 && a_player.maxMana >= 75;
@@ -579,7 +580,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                 },
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 5 xp and 75 maximum mana.";
+                        return "Have at least 5 xp and 75 maximum mana.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 5 && a_player.maxMana >= 75;
@@ -595,7 +596,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                 },
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 35 xp and 75 maximum mana.";
+                        return "Have at least 35 xp and 75 maximum mana.";
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 35 && a_player.maxMana >= 75;
@@ -622,7 +623,7 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
             {
                 ClassLevel {
                     [](GameState& a_gameState, PlayerData& a_player) {
-                        std::cout << "Have at least 30 xp and " << ((a_player.perks.test((size_t)Perks::ARCANE_EYES) || a_player.LevelInClass("Necromancer") > 0) ? "at least 1 level in Necromancer and at least 1 level in Fighter" : "[UNDECIPHERABLE]") << ".";
+                        return std::format("Have at least 30 xp and {}.", ((a_player.perks.test((size_t)Perks::ARCANE_EYES) || a_player.LevelInClass("Necromancer") > 0) ? "at least 1 level in Necromancer and at least 1 level in Fighter" : "[UNDECIPHERABLE]"));
                     },
                     [](GameState& a_gameState, PlayerData& a_player) {
                         return a_player.xp >= 30 && a_player.LevelInClass("Necromancer") >= 1 && a_player.LevelInClass("Fighter") >= 1;
