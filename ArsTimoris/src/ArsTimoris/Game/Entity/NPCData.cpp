@@ -6,12 +6,14 @@ NPCData::NPCData(void) : EntityData() {
     this->xp = 0;
     this->gold = 0;
     this->aiFunction = nullptr;
+    this->texture = "UIPanel";
 }
 
-NPCData::NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate) : EntityData(a_entityTemplate) {
+NPCData::NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, std::string a_texture) : EntityData(a_entityTemplate) {
     this->xp = a_npcTemplate->xp;
     this->gold = a_npcTemplate->gold;
     this->aiFunction = &a_npcTemplate->ai;
+    this->texture = a_texture;
 }
 
 int32_t NPCData::GetEffectiveArmor(void) {

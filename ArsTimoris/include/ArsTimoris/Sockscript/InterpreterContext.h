@@ -48,7 +48,7 @@ enum struct OperatorEvaluation {
 std::string OperatorEvaluationDisplayName(OperatorEvaluation a_operator);
 
 enum struct RegisterType {
-    ERROR,
+    ERROR_TYPE,
     STRING,
     INT,
     FLOAT,
@@ -68,7 +68,7 @@ public:
     int32_t boolRegister = -1;
     size_t targetLevel = 0;
     size_t currentLevel = 0;
-    RegisterType lastRegister = RegisterType::ERROR;
+    RegisterType lastRegister = RegisterType::ERROR_TYPE;
     OperatorEvaluation operatorEvaluation = OperatorEvaluation::NONE;
     std::vector<ReaderMode> mode = {ReaderMode::READ};
 

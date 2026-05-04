@@ -10,7 +10,7 @@ struct RoomAction {
 public:
     std::string name        = "";
     std::string description = "";
-    std::function<void(GameState&)> roomDescription = nullptr;
+    std::function<std::string(GameState&)> roomDescription = nullptr;
     std::function<bool(GameState&)> condition       = nullptr;
     std::function<void(GameState&)> usage           = nullptr;
 };

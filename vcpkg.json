@@ -9,6 +9,7 @@
       ]
     },
     "sdl3-ttf",
-    "platform-folders"
+    "platform-folders",
+    "boost-asio"
   ]
 }

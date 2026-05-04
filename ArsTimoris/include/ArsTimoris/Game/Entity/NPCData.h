@@ -13,9 +13,10 @@ public:
     const std::function<void(GameState&, NPCData&)>* aiFunction;
     std::vector<std::function<void(GameState&, NPCData&)>> onDeath = std::vector<std::function<void(GameState&, NPCData&)>>();
     bool stunned = false;
+    std::string texture;
 
     NPCData(void);
-    NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate);
+    NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, std::string a_texture);
 
     int32_t GetEffectiveArmor(void);
 

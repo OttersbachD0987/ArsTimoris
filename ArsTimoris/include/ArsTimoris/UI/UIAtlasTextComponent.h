@@ -74,12 +74,12 @@ namespace ArsTimoris::UI {
         /// @param a_gameState 
         /// @param a_layer 
         /// @param a_text 
-        void SetText(GameState& a_gameState, UIElement* a_layer, std::string a_text);
+        void SetText(GameState& a_gameState, /*UIElement* a_layer,*/ std::string a_text);
         /// @brief 
         /// @param a_gameState 
         /// @param a_layer 
         /// @param a_anchor 
-        void SetAnchor(GameState& a_gameState, UIElement* a_layer, UIAnchor a_anchor);
+        void SetAnchor(GameState& a_gameState, /*UIElement* a_layer,*/ UIAnchor a_anchor);
     };
 }
 #endif

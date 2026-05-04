@@ -100,16 +100,16 @@ namespace ArsTimoris::UI {
             SDL_RenderTexture(a_gameState.renderer, textTexture, NULL, &textArea.rect);
         });
         
-        SetAnchor(a_gameState, a_element, textAnchor);
+        SetAnchor(a_gameState, textAnchor);
     }
 
-    void UIAtlasTextComponent::SetText(GameState& a_gameState, UIElement* a_element, std::string a_text) {
+    void UIAtlasTextComponent::SetText(GameState& a_gameState, /* UIElement* a_element,*/ std::string a_text) {
         dirtyText = true;
         text = a_text;
         a_gameState.assets.uiManager->dirtyRecalculate = true;
     }
 
-    void UIAtlasTextComponent::SetAnchor(GameState& a_gameState, UIElement* a_element, UIAnchor a_anchor) {
+    void UIAtlasTextComponent::SetAnchor(GameState& a_gameState, /* UIElement* a_element,*/ UIAnchor a_anchor) {
         dirtyText = true;
         textAnchor = a_anchor;
         a_gameState.assets.uiManager->dirtyRecalculate = true;

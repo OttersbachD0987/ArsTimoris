@@ -8,7 +8,7 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 return a_target != a_caster && a_target->curHP > 0; 
             },
             [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) {
-                std::cout << "The " << a_caster->name << " throws a punch ";
+                a_gameState.AddMessage(std::format("The {} throws a punch ", a_caster->name));
                 int32_t modifier = 
                     a_caster->GetSkillModifier("Martial Combat") +
                     a_caster->GetSkillModifier("Unarmed Combat") +
@@ -62,37 +62,37 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
 
                     a_target->Hurt(damage + damageModifier);
 
-                    std::cout << "and hits with a " << result << " (" << roll << " + " << modifier << "), dealing " << (damage + damageModifier) << " (" << damage; 
+                    a_gameState.AppendMessage(std::format("and hits with a {} ({} + {}), dealing {} ({}", result, roll, modifier, damage + damageModifier, damage)); 
                     switch (damageTier) {
                         case 0:
                             break;
                         case 1:
-                            std::cout << " (1d12)";
+                            a_gameState.AppendMessage(" (1d12)");
                             break;
                         case 2:
-                            std::cout << " (2d6)";
+                            a_gameState.AppendMessage(" (2d6)");
                             break;
                         case 3:
-                            std::cout << " (3d4)";
+                            a_gameState.AppendMessage(" (3d4)");
                             break;
                         case 4:
-                            std::cout << " (4d3)";
+                            a_gameState.AppendMessage(" (4d3)");
                             break;
                     }
                     if (damageModifier > 0) {
-                        std::cout << " + " << damageModifier;
+                        a_gameState.AppendMessage(std::format(" + {}", damageModifier));
                     } else if (damageModifier < 0) {
                         
-                        std::cout << " - " << -damageModifier;
+                        a_gameState.AppendMessage(std::format(" - {}", -damageModifier));
                     }
-                    std::cout << ").\n" << std::endl;
+                    a_gameState.AppendMessage(").\n");
                 } else {
-                    std::cout << "and misses with a " << result << " (" << roll << " + " << modifier << ").\n" << std::endl;
+                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).\n", result, roll, modifier));
                 }
 
-                std::cout << "Prae Nom" << std::endl;
+                //std::cout << "Prae Nom" << std::endl;
                 //EatInput();
-                std::cout << "Post Nom" << std::endl;
+                //std::cout << "Post Nom" << std::endl;
 
                 if (player != nullptr) {
                     ++player->usedTurns;
@@ -891,7 +891,7 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
             "Treasure Trove",
             "A pile of riches.",
             [](GameState& a_gameState) {
-                std::cout << (a_gameState.rooms[a_gameState.curRoom].flags.contains("TreasureTrove_Looted") ? "- There isn't even a single coin that remains.\n" : "- There is a glittering pile of riches.\n");
+                return (a_gameState.rooms[a_gameState.curRoom].flags.contains("TreasureTrove_Looted") ? "- There isn't even a single coin that remains.\n" : "- There is a glittering pile of riches.\n");
             },
             [](GameState& a_gameState) {
                 return 
@@ -900,13 +900,13 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
                     !a_gameState.rooms[a_gameState.curRoom].flags.contains("TreasureTrove_Looted");
             },
             [](GameState& a_gameState) {
-                std:: cout << "We are in." << std::endl;
-                std::cout << std::format("Running with {}d{}", a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice")) << std::endl;
+                //std::cout << "We are in." << std::endl;
+                //std::cout << std::format("Running with {}d{}", a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice")) << std::endl;
                 a_gameState.rooms[a_gameState.curRoom].flags.emplace("TreasureTrove_Looted", 0);
                 int32_t goldAmount = a_gameState.RollDice(a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice"));
                 a_gameState.player.gold += goldAmount;
-                std::cout << "You find " << goldAmount << " (" << a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count") << "d" << a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice") << ") gold." << std::endl;
-                EatInput();
+                a_gameState.AddMessage(std::format("You find {} ({}d{}) gold.", goldAmount, a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice")));
+                //EatInput();
             }
         }
     },
@@ -915,7 +915,7 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
             "Shop",
             "Shop at the shop.",
             [](GameState& a_gameState) {
-                std::cout << "- A barterer is humming away in their humble shop.\n";
+                return "- A barterer is humming away in their humble shop.\n";
             },
             [](GameState& a_gameState) {
                 return true;
@@ -979,18 +979,19 @@ std::unordered_map<std::string, NPCTemplate> GameData::NPC_TEMPLATES = {
                 }
 
                 if (healed == 0) {
-                    std::cout << "The " << a_npc.name << " swings their staff at the player and ";
+                    a_gameState.AddMessage(std::format("The {} swings their staff at the player and ", a_npc.name));
                     if (a_gameState.RollDice(1, 20) >= a_gameState.player.GetEffectiveArmor()) {
                         int32_t damage = a_gameState.RollDice(1, 4);
                         a_gameState.player.Hurt(damage);
-                        std::cout << "hits, dealing " << damage << " damage." << std::endl;
+                        a_gameState.AppendMessage(std::format("hits, dealing {} damage.", damage));
                     } else {
-                        std::cout << "misses." << std::endl;
+                        a_gameState.AppendMessage("misses.");
                     }
                 } else {
                     a_npc.manaSickness += 1;
                     a_npc.DrainMana(10);
-                    std::cout << "The " << a_npc.name << " murmurs under their breath; as they do this the opponents are engufled in a pale green mist, which quickly dissipates, and " << healed << " of the opponents seem rejuvinated." << std::endl;
+                    
+                    a_gameState.AddMessage(std::format("The {} murmurs under their breath; as they do this the opponents are engufled in a pale green mist, which quickly dissipates, and {} of the opponents seem rejuvinated.", a_npc.name, healed));
                 }
             }
         }
@@ -1000,13 +1001,13 @@ std::unordered_map<std::string, NPCTemplate> GameData::NPC_TEMPLATES = {
             4,
             6,
             [](GameState& a_gameState, NPCData& a_npc) {
-                std::cout << "The " << a_npc.name << " swings their club at the player and ";
+                a_gameState.AddMessage(std::format("The {} swings their club at the player and ", a_npc.name));
                 if (a_gameState.RollDice(1, 20) >= a_gameState.player.GetEffectiveArmor()) {
                     int32_t damage = a_gameState.RollDice(1, 4);
                     a_gameState.player.Hurt(damage);
-                    std::cout << "hits, dealing " << damage << " damage." << std::endl;
+                    a_gameState.AppendMessage(std::format("hits, dealing {} damage.", damage));
                 } else {
-                    std::cout << "misses." << std::endl;
+                    a_gameState.AppendMessage("misses.");
                 }
             }
         }, // 1
@@ -1016,16 +1017,16 @@ std::unordered_map<std::string, NPCTemplate> GameData::NPC_TEMPLATES = {
             6,
             6,
             [](GameState& a_gameState, NPCData& a_npc) {
-                std::cout << "The " << a_npc.name << " swings their shortsword at the player and ";
+                a_gameState.AddMessage(std::format("The {} swings their shortsword at the player and ", a_npc.name));
                 int32_t modifier = 
                     a_npc.GetSkillModifier("Martial Combat") +
                     a_npc.GetSkillModifier("Swordsmanship");
                 if (a_gameState.RollDice(1, 20) + modifier >= a_gameState.player.GetEffectiveArmor()) {
                     int32_t damage = a_gameState.RollDice(1, 6) + (int32_t)(modifier * 0.5);
                     a_gameState.player.Hurt(damage);
-                    std::cout << "hits, dealing " << damage << " damage." << std::endl;
+                    a_gameState.AppendMessage(std::format("hits, dealing {} damage.", damage));
                 } else {
-                    std::cout << "misses." << std::endl;
+                    a_gameState.AppendMessage("misses.");
                 }
             }
         }

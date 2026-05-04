@@ -276,7 +276,7 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
                                     std::string value = FormatString(a_gameState, context, context.stringRegisters[context.stringRegister]);
                                     return *(T*)(&value);
                                 }
-                                case RegisterType::ERROR: {
+                                case RegisterType::ERROR_TYPE: {
                                     return (T)(0);
                                 }
                             }
@@ -512,7 +512,7 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
     switch (a_returnType) {
         case RegisterType::INT:
         case RegisterType::FLOAT:
-        case RegisterType::ERROR:
+        case RegisterType::ERROR_TYPE:
         case RegisterType::BOOL:
             return (T)0;
         case RegisterType::STRING:

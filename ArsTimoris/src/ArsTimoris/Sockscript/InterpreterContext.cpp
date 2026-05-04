@@ -127,9 +127,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return RegisterType::FLOAT;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::SUBT:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -144,9 +144,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return RegisterType::FLOAT;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::MULT:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -161,9 +161,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return RegisterType::FLOAT;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::DIVI:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -178,9 +178,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return RegisterType::FLOAT;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::MODU:
             intRegisters[intRegister] = intRegisters[intRegister] % a_value;
@@ -224,9 +224,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] > a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::GTE:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -237,9 +237,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] >= a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::LT:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -250,9 +250,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] < a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::LTE:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -263,9 +263,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] <= a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::EQ:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -276,9 +276,9 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] == a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::NEQ:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -289,14 +289,14 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] != a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         default:
-            lastRegister = RegisterType::ERROR;
+            lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
-            return RegisterType::ERROR;
+            return RegisterType::ERROR_TYPE;
     }
     
 }
@@ -319,9 +319,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     break;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
             lastRegister = RegisterType::FLOAT;
             return RegisterType::FLOAT;
@@ -336,9 +336,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     break;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
             lastRegister = RegisterType::FLOAT;
             return RegisterType::FLOAT;
@@ -353,9 +353,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     break;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
             lastRegister = RegisterType::FLOAT;
             return RegisterType::FLOAT;
@@ -370,9 +370,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     break;
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
             lastRegister = RegisterType::FLOAT;
             return RegisterType::FLOAT;
@@ -385,9 +385,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] > a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::GTE:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -398,9 +398,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] >= a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::LT:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -411,9 +411,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] < a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::LTE:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -424,9 +424,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] <= a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::EQ:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -437,9 +437,9 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] == a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         case OperatorEvaluation::NEQ:
             operatorEvaluation = OperatorEvaluation::NONE;
@@ -450,14 +450,14 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                     return SetBoolRegister(floatRegisters[floatRegister] != a_value);
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
-                case RegisterType::ERROR:
-                    lastRegister = RegisterType::ERROR;
-                    return RegisterType::ERROR;
+                case RegisterType::ERROR_TYPE:
+                    lastRegister = RegisterType::ERROR_TYPE;
+                    return RegisterType::ERROR_TYPE;
             }
         default:
-            lastRegister = RegisterType::ERROR;
+            lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
-            return RegisterType::ERROR;
+            return RegisterType::ERROR_TYPE;
     }
     
 }
@@ -495,8 +495,8 @@ RegisterType InterpreterContext::SetBoolRegister(bool a_value) {
             operatorEvaluation = OperatorEvaluation::NONE;
             return RegisterType::BOOL;
         default:
-            lastRegister = RegisterType::ERROR;
+            lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
-            return RegisterType::ERROR;
+            return RegisterType::ERROR_TYPE;
     }
 }

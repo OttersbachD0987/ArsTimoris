@@ -17,3 +17,4 @@ else()
 endif()
 
 add_subdirectory(ArsTimoris)
+add_subdirectory(ArsTimorisConsole)

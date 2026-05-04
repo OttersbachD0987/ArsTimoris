@@ -414,7 +414,7 @@ enum struct OperatorEvaluation {
 };
 
 enum struct RegisterType {
-    ERROR,
+    ERROR_TYPE,
     STRING,
     INT,
     FLOAT,
@@ -507,7 +507,7 @@ public:
                 return SetBoolRegister(intRegisters[intRegister] != a_value);
             default:
                 operatorEvaluation = OperatorEvaluation::NONE;
-                return RegisterType::ERROR;
+                return RegisterType::ERROR_TYPE;
         }
         
     }
@@ -554,7 +554,7 @@ public:
                 return SetBoolRegister(floatRegisters[floatRegister] != a_value);
             default:
                 operatorEvaluation = OperatorEvaluation::NONE;
-                return RegisterType::ERROR;
+                return RegisterType::ERROR_TYPE;
         }
       
     }
@@ -587,7 +587,7 @@ public:
                 return RegisterType::BOOL;
             default:
                 operatorEvaluation = OperatorEvaluation::NONE;
-                return RegisterType::ERROR;
+                return RegisterType::ERROR_TYPE;
         }
     }
 };
@@ -843,7 +843,7 @@ public:
                                         std::string value = FormatString(a_gameState, context, context.stringRegisters[context.stringRegister]);
                                         return *(T*)(&value);
                                     }
-                                    case RegisterType::ERROR: {
+                                    case RegisterType::ERROR_TYPE: {
                                         return (T)(0);
                                     }
                                 }
@@ -994,7 +994,7 @@ public:
                 return (T)false;
             case RegisterType::STRING:
                 return (T)"";
-            case RegisterType::ERROR:
+            case RegisterType::ERROR_TYPE:
                 return (T)(0);
         }
         
@@ -1999,7 +1999,7 @@ public:
 struct Test {
 public:
     std::string name = "";
-    RegisterType returnType = RegisterType::ERROR;
+    RegisterType returnType = RegisterType::ERROR_TYPE;
     std::string code = "";
 };
 
@@ -2012,17 +2012,17 @@ int main(int argc, char** argv) {
     std::vector<Test> tests = {
         {
             "If Test",
-            RegisterType::ERROR,
+            RegisterType::ERROR_TYPE,
             "{\n\tif (player.HasPerk(ARCANE_EYES)) {\n\t\tconsole.Print(\"There is a mana fountain in the area<comma> but you can't benefit from it.\\n\");\n\t} else {\n\t\tconsole.Print(\"Nothing of interest can be found in the room.\\n\");\n\t} end;\n}"
         },
         {
             "If Not Test",
-            RegisterType::ERROR,
+            RegisterType::ERROR_TYPE,
             "{\n\tif (!player.HasPerk(ARCANE_EYES)) {\n\t\tconsole.Print(\"There is a mana fountain in the area<comma> but you can't benefit from it.\\n\");\n\t} else {\n\t\tconsole.Print(\"Nothing of interest can be found in the room.\\n\");\n\t} end;\n}"
         },
         {
             "Var Test",
-            RegisterType::ERROR,
+            RegisterType::ERROR_TYPE,
             "{\n\tmanaGain<uint32> = math.Min(player.maxMana - player.curMana, 25);\n\tconsole.Print(\"you have regained {uint32@manaGain@} mana.\\n\");\n}"
         },
         {

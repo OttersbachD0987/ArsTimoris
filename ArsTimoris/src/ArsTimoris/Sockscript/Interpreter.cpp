@@ -261,7 +261,7 @@ int32_t Interpreter::ParseIntExpression(GameState& a_gameState, InterpreterConte
             break;
         case RegisterType::BOOL:
         case RegisterType::STRING:
-        case RegisterType::ERROR:
+        case RegisterType::ERROR_TYPE:
             toReturn = 0;
             break;
     }
@@ -527,7 +527,7 @@ float Interpreter::ParseFloatExpression(GameState& a_gameState, InterpreterConte
             break;
         case RegisterType::BOOL:
         case RegisterType::STRING:
-        case RegisterType::ERROR:
+        case RegisterType::ERROR_TYPE:
             toReturn = 0;
             break;
     }
@@ -1605,7 +1605,7 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
         if (method == "Print") {
             if (argc == 1) {
                 std::string message = FormatString(a_gameState, a_context, args[0]);
-                DebugLogging::ParsingOut << message;
+                //DebugLogging::ParsingOut << message << std::endl;
                 a_gameState.AppendMessage(message);
             } else {
                 DebugLogging::ParsingOut << "[ERROR]: console.Print must have 1 argument, this call has " << argc << "." << std::endl;
@@ -1625,31 +1625,33 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
         a_context.stringRegister += 1;
     } else if (object == "room") {
         if (method == "AddInhabitant") {
-            if (argc == 3) {
+            if (argc == 4) {
                 std::string entityTemplate = FormatString(a_gameState, a_context, args[0]);
                 std::string npcTemplate = FormatString(a_gameState, a_context, args[1]);
-                std::string modifierTemplates = FormatString(a_gameState, a_context, args[2]);
+                std::string texture = FormatString(a_gameState, a_context, args[2]);
+                std::string modifierTemplates = FormatString(a_gameState, a_context, args[3]);
                 std::vector<std::string> modifiers = std::vector<std::string>();
                 size_t modifierCount = SplitString(modifierTemplates, ":", modifiers);
                 #ifdef SCRIPT_PARSER_DEBUG_LOGGING
-                DebugLogging::ParsingOut << std::format("{}({}) = {}", entityTemplate, npcTemplate, modifierTemplates) << std::endl;
+                DebugLogging::ParsingOut << std::format("{}({})[{}] = {}", entityTemplate, npcTemplate, texture, modifierTemplates) << std::endl;
                 #endif
                 
-                NPCData npc = NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate));
+                NPCData npc = NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), texture);
                 for (const std::string& modifier : modifiers) {
                     npc = GameData::NPC_MODIFIERS.at(modifier)(npc);
                 }
 
                 a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(npc);
-            } else if (argc == 2) {
+            } else if (argc == 3) {
                 std::string entityTemplate = FormatString(a_gameState, a_context, args[0]);
                 std::string npcTemplate = FormatString(a_gameState, a_context, args[1]);
+                std::string texture = FormatString(a_gameState, a_context, args[2]);
                 #ifdef SCRIPT_PARSER_DEBUG_LOGGING
-                DebugLogging::ParsingOut << std::format("{}({})", entityTemplate, npcTemplate) << std::endl;
+                DebugLogging::ParsingOut << std::format("{}({})[{}]", entityTemplate, npcTemplate, texture) << std::endl;
                 #endif
-                a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate)));
+                a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), texture));
             } else {
-                DebugLogging::ParsingOut << "[ERROR]: room.AddInhabitant must have 3 arguments, this call has " << argc << "." << std::endl;
+                DebugLogging::ParsingOut << "[ERROR]: room.AddInhabitant must have 3 or 4 arguments, this call has " << argc << "." << std::endl;
             }
         } else if (method == "AddRoomAction") {
             if (argc == 1) {

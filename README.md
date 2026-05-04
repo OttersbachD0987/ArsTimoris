@@ -195,6 +195,7 @@ You can either run `scripts/release.sh` or do it by hand:
 
 ```bash
 (cd ./out/build/x64/Release; ./ArsTimoris)
+(cd ./out/build/x64/Release; ./ArsTimorisConsole)
 ```
 
 ***
@@ -205,6 +206,7 @@ You can either run `scripts/debug.sh` or do it by hand:
 
 ```bash
 (cd ./out/build/x64/Debug; ./ArsTimoris)
+(cd ./out/build/x64/Debug; ./ArsTimorisConsole)
 ```
 
 ***
@@ -215,6 +217,7 @@ You can either run `scripts/release.bat` or do it by hand:
 
 ```bat
 START "" /D ".\out\build\x64\Release" ".\out\build\x64\Release\ArsTimoris.exe"
+START "" /D ".\out\build\x64\Release" ".\out\build\x64\Release\ArsTimorisConsole.exe"
 ```
 
 ***
@@ -225,6 +228,7 @@ You can either run `scripts/debug.bat` or do it by hand:
 
 ```bat
 START "" /D ".\out\build\x64\Debug" ".\out\build\x64\Debug\ArsTimoris.exe"
+START "" /D ".\out\build\x64\Debug" ".\out\build\x64\Debug\ArsTimorisConsole.exe"
 ```
 
 ***
@@ -235,6 +239,7 @@ You can either run `scripts/release.ps1` or do it by hand:
 
 ```powershell
 Start-Process -FilePath ".\out\build\x64\Release\ArsTimoris.exe" -WorkingDirectory ".\out\build\x64\Release"
+Start-Process -FilePath ".\out\build\x64\Release\ArsTimorisConsole.exe" -WorkingDirectory ".\out\build\x64\Release"
 ```
 
 ***
@@ -245,6 +250,7 @@ You can either run `scripts/debug.ps1` or do it by hand:
 
 ```powershell
 Start-Process -FilePath ".\out\build\x64\Debug\ArsTimoris.exe" -WorkingDirectory ".\out\build\x64\Debug"
+Start-Process -FilePath ".\out\build\x64\Debug\ArsTimorisConsole.exe" -WorkingDirectory ".\out\build\x64\Debug"
 ```
 
 ***
