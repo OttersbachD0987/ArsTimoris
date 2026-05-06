@@ -104,6 +104,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("With a distinctive sound, three goblins emerge from hidden locations and surround you.\n");
     room.AddInhabitant("Goblin", "Grunt", 0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Grunt", 40.0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Shaman", 20.0, 0, "GoblinShaman", "Shaman");

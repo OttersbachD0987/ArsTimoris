@@ -202,6 +202,9 @@ int main(int argc, char** argv) {
         std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> header;
         std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> description;
     };
+    
+    std::function<void(GameState&)> menuChangedCallback = nullptr;
+    bool menuToChange = false;
 
     #pragma region UI
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
@@ -1779,7 +1782,7 @@ int main(int argc, char** argv) {
         )
     ).first->second->Hookup(gameState, shopMenu, element);
 
-    otherElement = element->AddChild("ShopName", ArsTimoris::UI::UIRect{{5, 5, 990, 95}}).get();
+    otherElement = element->AddChild("ShopName", ArsTimoris::UI::UIRect{{5, 5, 990, 35}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1804,7 +1807,7 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, shopMenu, otherElement);
     shopNameText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-    otherElement = element->AddChild("ShopGold", ArsTimoris::UI::UIRect{{1000, 5, 190, 95}}).get();
+    otherElement = element->AddChild("ShopGold", ArsTimoris::UI::UIRect{{1000, 5, 195, 35}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1831,7 +1834,7 @@ int main(int argc, char** argv) {
 
     for (int32_t i = 0; i < 6; ++i) {
         shopCatalogs.push_back(ShopCatalogUIEntry{i, nullptr, nullptr});
-        otherElement = element->AddChild(std::format("Buy{}", i), ArsTimoris::UI::UIRect{{5, 105.0f + 80 * i, 95, 40}}).get();
+        otherElement = element->AddChild(std::format("Buy{}", i), ArsTimoris::UI::UIRect{{5, 105.0f + 90 * i, 95, 30}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
@@ -1886,7 +1889,7 @@ int main(int argc, char** argv) {
             return true;
         });
 
-        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{100, 105.0f + 80 * i, 400, 40}}).get();
+        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{100, 105.0f + 90 * i, 405, 30}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
@@ -1911,7 +1914,7 @@ int main(int argc, char** argv) {
         ).first->second->Hookup(gameState, shopMenu, otherElement);
         shopCatalogs.back().header = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-        otherElement = element->AddChild(std::format("Description{}", i), ArsTimoris::UI::UIRect{{5, 145.0f + 80 * i, 400, 40}}).get();
+        otherElement = element->AddChild(std::format("Description{}", i), ArsTimoris::UI::UIRect{{5, 135.0f + 90 * i, 500, 60}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
@@ -1930,7 +1933,7 @@ int main(int argc, char** argv) {
                     2.0f,
                     8,
                     8,
-                    ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+                    ArsTimoris::UI::UIAnchor::TOP_LEFT
                 )
             )
         ).first->second->Hookup(gameState, shopMenu, otherElement);
@@ -2154,9 +2157,14 @@ int main(int argc, char** argv) {
         //std::cout << "Prae Cache Input" << std::endl;
         gameState.CacheInputState();
         //std::cout << "Post Cache Input" << std::endl;
-        if (gameState.messageStack.size() > 0 && !messageOverlay->enabled) {
-            messageOverlay->enabled = true;
-            messageText->SetText(gameState, /*&messageOverlay->uiElements.at("Message Action"),*/ gameState.messageStack[0]);
+        if (!messageOverlay->enabled) {
+            if (gameState.messageStack.size() > 0) {
+                messageOverlay->enabled = true;
+                messageText->SetText(gameState, /*&messageOverlay->uiElements.at("Message Action"),*/ gameState.messageStack[0]);
+            } else if (menuToChange) {
+                menuChangedCallback(gameState);
+                menuToChange = false;
+            }
         }
         while (SDL_PollEvent(&event)) {
             gameState.inputData.mouse = SDL_GetMouseState(&gameState.inputData.mousePos.x, &gameState.inputData.mousePos.y);
@@ -2168,15 +2176,21 @@ int main(int argc, char** argv) {
                     switch (event.button.button) {
                         case SDL_BUTTON_LEFT:
                             if (messageOverlay->enabled) {
+                                std::cout << "Overlay" << std::endl;
                                 gameState.messageStack.erase(gameState.messageStack.begin());
                                 if (gameState.messageStack.size() <= 0) {
                                     messageOverlay->enabled = false;
+                                    if (menuToChange) {
+                                        menuChangedCallback(gameState);
+                                        menuToChange = false;
+                                    }
                                 } else {
                                     messageText->SetText(gameState, /*&messageOverlay->uiElements.at("Message Action"),*/ gameState.messageStack[0]);
                                 }
                             } else if (!gameState.uiManager.OnMouseLeftDown(gameState, &gameState.inputData.mousePos)) {
                                 switch (gameState.menu) {
                                     case Menu::COMBAT: {
+                                        std::cout << "Combat" << std::endl;
                                         for (const NPCDisplay& npc : combatNPCs) {
                                             if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
                                                 room = &gameState.rooms[gameState.curRoom];
@@ -2286,6 +2300,11 @@ int main(int argc, char** argv) {
                                             if (++choice >= gameState.player.actions.size()) {
                                                 choice = 0;
                                             }
+                                        } else if (event.key.key == SDLK_SPACE) {
+                                            room = &gameState.rooms[gameState.curRoom];
+                                            if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &gameState.player)) {
+                                                gameState.player.actions[choice].action(gameState, &gameState.player, &gameState.player);
+                                            }
                                         }
                                     }
                                     break;
@@ -2383,6 +2402,10 @@ int main(int argc, char** argv) {
             case Screen::GAME: {
                 switch (gameState.menu) {
                     case Menu::NONE: {
+                        if (messageOverlay->enabled) {
+                            break;
+                        }
+
                         if (!gameState.rooms[gameState.curRoom].initialized) {
                             gameState.InitializeRoom(&gameState.rooms[gameState.curRoom]);
                             encounter = gameState.GetRandomEncounter();
@@ -2400,13 +2423,17 @@ int main(int argc, char** argv) {
 
                         room = &gameState.rooms[gameState.curRoom];
                         if (room->inhabitants.size() > 0 && !gameState.debug.noFights) {
-                            roomGeneralMenu->enabled = false;
-                            combatMenu->enabled = true;
                             choice = 0;
-                            gameState.menu = Menu::COMBAT;
+                            menuToChange = true;
+                            menuChangedCallback = [&](GameState& a_gameState) {
+                                roomGeneralMenu->enabled = false;
+                                combatMenu->enabled = true;
+                                choice = 0;
+                                a_gameState.menu = Menu::COMBAT;
+                            };
                             float xi = 20.0f;
                             float yi = 30.0f;
-                            //std::cout << "Moogle" << std::endl;
+                            std::cout << "Moogle" << std::endl;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
                                 std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> renderer = gameState.assets.npcRenderers.at(room->inhabitants[i].texture);
                                 //std::println("({}, {}, {}, {}) {}", xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, renderer->width * 2, renderer->height * 2, i);
@@ -2820,9 +2847,12 @@ int main(int argc, char** argv) {
                                 }
                             }
                         } else {
-                            gameState.menu = Menu::NONE;
-                            roomGeneralMenu->enabled = true;
-                            combatMenu->enabled = false;
+                            menuToChange = true;
+                            menuChangedCallback = [&roomGeneralMenu, &combatMenu](GameState& a_gameState) {
+                                roomGeneralMenu->enabled = true;
+                                combatMenu->enabled = false;
+                                a_gameState.menu = Menu::NONE;
+                            };
                         }
                         /*
                         if (room->inhabitants.size() > 0) {
