@@ -10,7 +10,7 @@ namespace ArsTimoris::Commands {
 namespace ArsTimoris::Commands {
     /**
      * @class CommandHandler
-     * @brief Manages the addition and execution of commands in the SimpleComplexRPG server.
+     * @brief Manages the addition and execution of commands for the server.
      *
      * CommandHandler provides functionality to register commands and execute them by name,
      * handling associated parameters and executing the corresponding function.

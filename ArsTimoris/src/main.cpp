@@ -322,6 +322,7 @@ int main(int argc, char** argv) {
     public:
         int32_t index;
         std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> header;
+        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> description;
     };
 
     std::vector<ShopCatalogUIEntry> shopCatalogs = std::vector<ShopCatalogUIEntry>();
@@ -339,8 +340,14 @@ int main(int argc, char** argv) {
             shopCatalogs[i].index = shopPager + i;
             if (shopPager + i < shop->catalog.size()) {
                 shopCatalogs[i].header->SetText(gameState, std::format("{} ({}) x{}", GameData::ITEM_DATA[shop->catalog[i].stack.itemID].name, shop->catalog[i].cost, shop->catalog[i].stack.stackSize));
+                std::string descriptor = GameData::ITEM_DATA[shop->catalog[i].stack.itemID].description;
+                for (const std::pair<std::string, int32_t>& modPair : shop->catalog[i].stack.metadata) {
+                    descriptor += std::format("; {}: {}", modPair.first, modPair.second);
+                }
+                shopCatalogs[i].description->SetText(gameState, descriptor);
             } else {
                 shopCatalogs[i].header->SetText(gameState, "-");
+                shopCatalogs[i].description->SetText(gameState, "-");
             }
         }
         shopGoldText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
@@ -1788,7 +1795,7 @@ int main(int argc, char** argv) {
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Buy",
                 "BitCrusher",
-                2.0f,
+                3.0f,
                 8,
                 8,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
@@ -1813,7 +1820,7 @@ int main(int argc, char** argv) {
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "GP: 0",
                 "BitCrusher",
-                2.0f,
+                3.0f,
                 8,
                 8,
                 ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
@@ -1823,8 +1830,8 @@ int main(int argc, char** argv) {
     shopGoldText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
     for (int32_t i = 0; i < 6; ++i) {
-        shopCatalogs.push_back(ShopCatalogUIEntry{i, nullptr});
-        otherElement = element->AddChild(std::format("Buy{}", i), ArsTimoris::UI::UIRect{{5, 105.0f + 55 * i, 95, 50}}).get();
+        shopCatalogs.push_back(ShopCatalogUIEntry{i, nullptr, nullptr});
+        otherElement = element->AddChild(std::format("Buy{}", i), ArsTimoris::UI::UIRect{{5, 105.0f + 80 * i, 95, 40}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
@@ -1862,7 +1869,7 @@ int main(int argc, char** argv) {
                 std::cout << "You do not have enough gold." << std::endl;
             }
             */
-            if (inventoryRows[ia].index < shop->catalog.size()) {
+            if (shopCatalogs[ia].index < shop->catalog.size()) {
                 int32_t option = shopCatalogs[ia].index;
                 if (shop->catalog[option].cost <= a_gameState.player.gold) {
                     a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
@@ -1879,7 +1886,7 @@ int main(int argc, char** argv) {
             return true;
         });
 
-        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{100, 105.0f + 55 * i, 400, 50}}).get();
+        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{100, 105.0f + 80 * i, 400, 40}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
@@ -1903,6 +1910,31 @@ int main(int argc, char** argv) {
             )
         ).first->second->Hookup(gameState, shopMenu, otherElement);
         shopCatalogs.back().header = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+        otherElement = element->AddChild(std::format("Description{}", i), ArsTimoris::UI::UIRect{{5, 145.0f + 80 * i, 400, 40}}).get();
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Texture"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                    std::string_view("UIPanel"), 
+                    true
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Text"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                    "Bla",
+                    "BitCrusher",
+                    2.0f,
+                    8,
+                    8,
+                    ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        shopCatalogs.back().description = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     }
     #pragma endregion
     #pragma endregion
@@ -1936,6 +1968,7 @@ int main(int argc, char** argv) {
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command(
         "add_gold", 
+        "Add an amount of gold to the player.",
         [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
             if (parameters.size() < 1) {
                 std::cout << "Not enough arguments." << std::endl;
@@ -1953,6 +1986,7 @@ int main(int argc, char** argv) {
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command(
         "add_xp", 
+        "Add an amount of xp to the player.",
         [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
             if (parameters.size() < 1) {
                 std::cout << "Not enough arguments." << std::endl;
@@ -1969,7 +2003,55 @@ int main(int argc, char** argv) {
     ));
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "add_hp", 
+        "Add an amount of hp to the player.",
+        [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+            if (parameters.size() < 1) {
+                std::cout << "Not enough arguments." << std::endl;
+                return;
+            }
+
+            if (parameters[0].index() != ArsTimoris::Commands::ParameterType::INT) {
+                std::cout << "Expected integer for amount but got a different type." << std::endl;
+                return;
+            }
+
+            int value = std::get<int>(parameters[0]);
+            if (value < 0) {
+                gameState.player.Hurt(value);
+            } else {
+                gameState.player.Heal(value);
+            }
+        }, {ArsTimoris::Commands::ParameterType::INT}
+    ));
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "add_mp", 
+        "Add an amount of mana to the player.",
+        [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+            if (parameters.size() < 1) {
+                std::cout << "Not enough arguments." << std::endl;
+                return;
+            }
+
+            if (parameters[0].index() != ArsTimoris::Commands::ParameterType::INT) {
+                std::cout << "Expected integer for amount but got a different type." << std::endl;
+                return;
+            }
+            
+
+            int value = std::get<int>(parameters[0]);
+            if (value < 0) {
+                gameState.player.DrainMana(value);
+            } else {
+                gameState.player.RegainMana(value);
+            }
+        }, {ArsTimoris::Commands::ParameterType::INT}
+    ));
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
         "add_turns", 
+        "Add an amount of turns to the player.",
         [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
             if (parameters.size() < 1) {
                 std::cout << "Not enough arguments." << std::endl;
@@ -1983,6 +2065,24 @@ int main(int argc, char** argv) {
             
             gameState.player.turns += std::get<int>(parameters[0]);
         }, {ArsTimoris::Commands::ParameterType::INT}
+    ));
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "debug", 
+        "Toggle debug mode."
+        [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+            gameState.debug.enabled = !gameState.debug.enabled;
+            std::cout << "Debug mode " << (gameState.debug.enabled ? "enabled" : "disabled") << "." << std::endl;
+        }
+    ));
+
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "no_fights", 
+        "Toggle No Fights cheat."
+        [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+            gameState.debug.noFights = !gameState.debug.noFights;
+            std::cout << "No Fights " << (gameState.debug.noFights ? "enabled" : "disabled") << "." << std::endl;
+        }
     ));
 
     //commandHandler.AddCommand(Command("", [&](const CommandHandler& handler, std::vector<Parameter> parameters) {}));
@@ -2080,11 +2180,8 @@ int main(int argc, char** argv) {
                                         for (const NPCDisplay& npc : combatNPCs) {
                                             if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
                                                 room = &gameState.rooms[gameState.curRoom];
-                                                //std::println("Bongo 1 go ({})", choice);
                                                 if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &room->inhabitants[npc.index])) {
-                                                    //std::println("Bongo 2 go ({})", npc.index);
                                                     gameState.player.actions[choice].action(gameState, &gameState.player, &room->inhabitants[npc.index]);
-                                                    //std::println("Bongo 3 go");
                                                 }
                                                 break;
                                             }
@@ -2309,10 +2406,10 @@ int main(int argc, char** argv) {
                             gameState.menu = Menu::COMBAT;
                             float xi = 20.0f;
                             float yi = 30.0f;
-                            std::cout << "Moogle" << std::endl;
+                            //std::cout << "Moogle" << std::endl;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
                                 std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> renderer = gameState.assets.npcRenderers.at(room->inhabitants[i].texture);
-                                std::println("({}, {}, {}, {}) {}", xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, renderer->width * 2, renderer->height * 2, i);
+                                //std::println("({}, {}, {}, {}) {}", xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, renderer->width * 2, renderer->height * 2, i);
                                 combatNPCs.push_back(NPCDisplay(gameState,
                                     SDL_FRect{xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, (float)renderer->width * 2, (float)renderer->height * 2}, 
                                     room->inhabitants[i].armor,
@@ -2593,6 +2690,11 @@ int main(int argc, char** argv) {
                             gameState.menu = Menu::STATS;
                         }
                         */
+                        hpText->SetText(gameState, std::format("HP: {:>3}/{:<3}", gameState.player.curHP, gameState.player.maxHP));
+                        mpText->SetText(gameState, std::format("MP: {:>3}/{:<3}", gameState.player.curMana, gameState.player.maxMana));
+                        acText->SetText(gameState, std::format("AC: {}", gameState.player.GetEffectiveArmor()));
+                        xpText->SetText(gameState, std::format("XP: {}", gameState.player.xp));
+                        gpText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
                         break;
                     }
                     case Menu::INVENTORY: {
@@ -2829,6 +2931,8 @@ int main(int argc, char** argv) {
                             shopMenu->enabled = true;
                             gameState.justSwapped = false;
                             UpdateShopMenu();
+                        } else {
+                            gpText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
                         }
                         break;
                     }
