@@ -10,13 +10,15 @@ struct NPCData : public EntityData {
 public:
     int32_t xp;
     int32_t gold;
+    float x = 0;
+    float y = 0;
     const std::function<void(GameState&, NPCData&)>* aiFunction;
     std::vector<std::function<void(GameState&, NPCData&)>> onDeath = std::vector<std::function<void(GameState&, NPCData&)>>();
     bool stunned = false;
     std::string texture;
 
     NPCData(void);
-    NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, std::string a_texture);
+    NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, float a_x, float a_y, std::string a_texture);
 
     int32_t GetEffectiveArmor(void);
 

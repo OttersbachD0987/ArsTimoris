@@ -64,12 +64,9 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
                             #endif
                             if (ifTrue.back().second) {
                                 context.mode.push_back(ReaderMode::FALLTHROUGH);
-                            } else {
-                                ++context.currentLevel;
                             }
-                        } else {
-                            ++context.currentLevel;
                         }
+                        ++context.currentLevel;
                         context.stringRegisters[context.stringRegister] = "";
                         break;
                     }
@@ -332,6 +329,7 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
                             context.mode.pop_back();
                             std::string value = FormatString(a_gameState, context, context.stringRegisters[context.stringRegister]);
                             variables.Del(value);
+                            context.stringRegisters[context.stringRegister] = "";
                         }
                         break;
                     }

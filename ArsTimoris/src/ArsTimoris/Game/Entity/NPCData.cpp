@@ -9,10 +9,12 @@ NPCData::NPCData(void) : EntityData() {
     this->texture = "UIPanel";
 }
 
-NPCData::NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, std::string a_texture) : EntityData(a_entityTemplate) {
+NPCData::NPCData(const EntityTemplate& a_entityTemplate, const NPCTemplate* const a_npcTemplate, float a_x, float a_y, std::string a_texture) : EntityData(a_entityTemplate) {
     this->xp = a_npcTemplate->xp;
     this->gold = a_npcTemplate->gold;
     this->aiFunction = &a_npcTemplate->ai;
+    this->x = a_x;
+    this->y = a_y;
     this->texture = a_texture;
 }
 

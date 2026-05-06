@@ -55,6 +55,15 @@ namespace ArsTimoris::Assets {
             std::forward_as_tuple(std::move(audioAsset)));
     }
 
+    void Assets::AddNPCRenderer(std::string a_path, std::string a_name) {
+        std::println("NPCRenderer: {} {}", a_path, a_name);
+        std::shared_ptr<NPCRendererAsset> npcRenderer = std::make_shared<NPCRendererAsset>(a_name, a_name); 
+        npcRenderer->Load(this, a_path);
+        npcRenderers.emplace(std::piecewise_construct,
+            std::forward_as_tuple(a_name), 
+            std::forward_as_tuple(std::move(npcRenderer)));
+    }
+
     void Assets::Uninitialize(void) {
         for (std::pair<const std::string, std::shared_ptr<TextureAsset>>& pair : textures) {
             pair.second->Unload();

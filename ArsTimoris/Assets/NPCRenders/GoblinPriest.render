@@ -1,0 +1,11 @@
+meta:
+22, 32;
+
+steps:
+- Image(
+    GoblinPriest;
+    255;
+    blend;
+)[
+    animate_x(22, 4, 0.5);
+]

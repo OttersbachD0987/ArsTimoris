@@ -20,6 +20,7 @@ enum class Menu {
     STATS,
     INVENTORY,
     LEVEL_UP,
+    SHOP,
     NONE
 };
 #pragma endregion

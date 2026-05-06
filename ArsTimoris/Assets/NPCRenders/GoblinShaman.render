@@ -1,0 +1,11 @@
+meta:
+20, 35;
+
+steps:
+- Image(
+    GoblinShaman;
+    255;
+    blend;
+)[
+    animate_x(20, 6, 0.5);
+]

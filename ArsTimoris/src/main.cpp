@@ -3,6 +3,9 @@
 // Daley Ottersbach
 // 3/6/2026
 
+#define SCRIPT_PARSER_DEBUG_LOGGING 1
+//#define LEGACY_COMMA_REPLACEMENT 1
+
 //#define __STDC_WANT_LIB_EXT1__ 1
 //#include <cstring>
 #ifdef _WIN32_
@@ -33,6 +36,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
+#include <chrono>
 #include <print>
 #include <thread>
 
@@ -61,7 +65,7 @@ void PrintCombatNPCData(GameState& a_gameState, const NPCData& a_npc) {
 }
 
 int main(int argc, char** argv) {
-    DebugLogging::OpenParserLog(std::filesystem::current_path() / "Logs" / "ParserLog.txt");
+    DebugLogging::OpenParserLog(std::filesystem::current_path() / "Logs" / "ParserLog.log");
     std::filesystem::path dataPath = std::filesystem::current_path().append("Assets").append("Data");
     //DataComponents::DataContainer container = DataComponents::ParseDataFile(std::filesystem::current_path().append("test.data"));
     //std::cout << std::format("Pre loading Starts ({})", dataPath.string()) << std::endl;
@@ -90,15 +94,15 @@ int main(int argc, char** argv) {
         SDL_FRect area;
         SDL_Texture* armorTexture;
         SDL_FRect armorArea;
-        std::shared_ptr<ArsTimoris::Assets::TextureAsset> texture;
+        std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> renderer;
         size_t index;
 
-        NPCDisplay(GameState& a_gameState, SDL_FRect a_area, int32_t a_armor, std::shared_ptr<ArsTimoris::Assets::TextureAsset> a_texture, size_t a_index) {
+        NPCDisplay(GameState& a_gameState, SDL_FRect a_area, int32_t a_armor, std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> a_renderer, size_t a_index) {
             this->area = a_area;
-            this->texture = a_texture;
+            this->renderer = a_renderer;
             this->index = a_index;
             SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, area.w);
-            this->armorArea = SDL_FRect{area.x, area.y, (float)armorSurface->w, (float)armorSurface->h};
+            this->armorArea = SDL_FRect{area.x, area.y, (float)armorSurface->w * 2.0f, (float)armorSurface->h * 2.0f};
             this->armorTexture = SDL_CreateTextureFromSurface(a_gameState.renderer, armorSurface);
             SDL_SetTextureScaleMode(armorTexture, SDL_SCALEMODE_NEAREST);
             SDL_DestroySurface(armorSurface);
@@ -142,7 +146,7 @@ int main(int argc, char** argv) {
     gameState.uiManager = ArsTimoris::UI::UIManager();
     gameState.assets.uiManager = &gameState.uiManager;
 
-    std::cout << "Pre Images" << std::endl;
+    std::cout << "Pre Base Assets" << std::endl;
     for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path().append("Assets"))) {
         if (dir_entry.path().has_extension()) {
             if (dir_entry.path().extension().string() == ".png") {
@@ -164,6 +168,15 @@ int main(int argc, char** argv) {
                 */
             } else if (dir_entry.path().extension().string() == ".wav") {
                 gameState.assets.AddSound(gameState.audioDevice, dir_entry.path().string(), dir_entry.path().stem().string());
+            }
+        }
+    }
+
+    std::cout << "Pre Data Assets" << std::endl;
+    for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path().append("Assets"))) {
+        if (dir_entry.path().has_extension()) {
+            if (dir_entry.path().extension().string() == ".render") {
+                gameState.assets.AddNPCRenderer(dir_entry.path().string(), dir_entry.path().stem().string());
             }
         }
     }
@@ -217,6 +230,10 @@ int main(int argc, char** argv) {
         std::forward_as_tuple(std::string_view("Room Move Menu"))
     );
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Shop Menu"), 
+        std::forward_as_tuple(std::string_view("Shop Menu"))
+    );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Room Actions Menu"), 
         std::forward_as_tuple(std::string_view("Room Actions Menu"))
     );
@@ -263,9 +280,15 @@ int main(int argc, char** argv) {
     levelMenu->enabled = false;
     ArsTimoris::UI::UILayer* inventoryMenu = &gameState.uiManager.uiLayers.at("Inventory Menu");
     inventoryMenu->enabled = false;
+    ArsTimoris::UI::UILayer* shopMenu = &gameState.uiManager.uiLayers.at("Shop Menu");
+    shopMenu->enabled = false;
 
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> classesText;
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> skillsText;
+
+    
+    std::function<void(void)> UpdateLevelUp;
+    int32_t classChoice = 0;
 
     std::vector<InventoryRow> inventoryRows = std::vector<InventoryRow>();
     int32_t currentInventoryPage = 0;
@@ -294,6 +317,36 @@ int main(int argc, char** argv) {
             }
         }
     };
+
+    struct ShopCatalogUIEntry {
+    public:
+        int32_t index;
+        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> header;
+    };
+
+    std::vector<ShopCatalogUIEntry> shopCatalogs = std::vector<ShopCatalogUIEntry>();
+
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> shopNameText;
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> shopGoldText;
+    int32_t shopChoice;
+    int32_t shopPage = 0;
+    ShopInstance* shop;
+    std::function<void(void)> UpdateShopMenu = [&](void) {
+        shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
+        shopNameText->SetText(gameState, shop->shopName);
+        int32_t shopPager = shopPage * 6;
+        for (size_t i = 0; i < 6; ++i) {
+            shopCatalogs[i].index = shopPager + i;
+            if (shopPager + i < shop->catalog.size()) {
+                shopCatalogs[i].header->SetText(gameState, std::format("{} ({}) x{}", GameData::ITEM_DATA[shop->catalog[i].stack.itemID].name, shop->catalog[i].cost, shop->catalog[i].stack.stackSize));
+            } else {
+                shopCatalogs[i].header->SetText(gameState, "-");
+            }
+        }
+        shopGoldText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
+    };
+
+    
 
     #pragma region Main Menu
     mainMenu->uiElements.emplace(std::piecewise_construct, 
@@ -1140,14 +1193,25 @@ int main(int argc, char** argv) {
 
     #pragma region Combat
     combatMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Top Action"), 
+        std::forward_as_tuple("aaaaaBackground Actions"), 
         std::forward_as_tuple(
-            std::string_view("Top Action"), 
-            ArsTimoris::UI::UIRect{{720, 410, 260, 50}}
+            std::string_view("aaaaaBackground Actions"), 
+            ArsTimoris::UI::UIRect{{692, 408, 316, 184}}
         )
     );
-    element = &combatMenu->uiElements.at("Top Action");
+    element = &combatMenu->uiElements.at("aaaaaBackground Actions");
     element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("CombatActionBacking"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+
+    otherElement = element->AddChild("Top Action", ArsTimoris::UI::UIRect{{28, 2, 260, 50}}).get(); // {720, 410, 260, 50}
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1155,8 +1219,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    element->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1167,18 +1231,11 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> topActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> topActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
-    combatMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Middle Action"), 
-        std::forward_as_tuple(
-            std::string_view("Middle Action"), 
-            ArsTimoris::UI::UIRect{{700, 470, 300, 60}}
-        )
-    );
-    element = &combatMenu->uiElements.at("Middle Action");
-    element->components.emplace(std::piecewise_construct, 
+    otherElement = element->AddChild("Middle Action", ArsTimoris::UI::UIRect{{8, 62, 300, 60}}).get(); // {700, 470, 300, 60}
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1186,8 +1243,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    element->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1198,18 +1255,11 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> middleActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> middleActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     
-    combatMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Bottom Action"), 
-        std::forward_as_tuple(
-            std::string_view("Bottom Action"), 
-            ArsTimoris::UI::UIRect{{720, 540, 260, 50}}
-        )
-    );
-    element = &combatMenu->uiElements.at("Bottom Action");
-    element->components.emplace(std::piecewise_construct, 
+    otherElement = element->AddChild("Bottom Action", ArsTimoris::UI::UIRect{{28, 132, 260, 50}}).get(); // {720, 540, 260, 50}
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1217,8 +1267,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    element->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1229,8 +1279,8 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(element->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     #pragma endregion
 
     #pragma region Message Overlay
@@ -1285,7 +1335,7 @@ int main(int argc, char** argv) {
         )
     ).first->second->Hookup(gameState, statsMenu, element);
 
-    otherElement = element->AddChild("Classes", ArsTimoris::UI::UIRect{{5, 5, 600, 590}}).get();
+    otherElement = element->AddChild("Classes", ArsTimoris::UI::UIRect{{5, 5, 700, 550}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1303,14 +1353,14 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                8,
+                ArsTimoris::UI::UIAnchor::TOP_LEFT
             )
         )
     ).first->second->Hookup(gameState, statsMenu, otherElement);
     classesText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-    otherElement = element->AddChild("Levels", ArsTimoris::UI::UIRect{{5, 555, 600, 40}}).get();
+    otherElement = element->AddChild("Levels", ArsTimoris::UI::UIRect{{5, 550, 700, 45}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1326,20 +1376,22 @@ int main(int argc, char** argv) {
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
                 "Level Up",
                 "BitCrusher",
-                2.0f,
+                3.0f,
                 8,
                 6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
     ).first->second->Hookup(gameState, statsMenu, otherElement);
     otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
         levelMenu->enabled = true;
+        statsMenu->enabled = false;
         gameState.menu = Menu::LEVEL_UP;
+        UpdateLevelUp();
         return true;
     });
 
-    otherElement = element->AddChild("Skills", ArsTimoris::UI::UIRect{{600, 5, 600, 590}}).get();
+    otherElement = element->AddChild("Skills", ArsTimoris::UI::UIRect{{700, 5, 495, 590}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1357,8 +1409,8 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                8,
+                ArsTimoris::UI::UIAnchor::TOP_LEFT
             )
         )
     ).first->second->Hookup(gameState, statsMenu, otherElement);
@@ -1388,8 +1440,6 @@ int main(int argc, char** argv) {
     //Description: "{}"
     //Cost: "{}"
 
-    std::function<void(void)> UpdateLevelUp;
-    int32_t classChoice = 0;
 
     otherElement = element->AddChild("Index", ArsTimoris::UI::UIRect{{5, 5, 195, 55}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
@@ -1409,8 +1459,8 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                8,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
     ).first->second->Hookup(gameState, levelMenu, otherElement);
@@ -1434,8 +1484,8 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                8,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
     ).first->second->Hookup(gameState, levelMenu, otherElement);
@@ -1459,8 +1509,8 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
-                ArsTimoris::UI::UIAnchor::TOP_CENTER
+                8,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
     ).first->second->Hookup(gameState, levelMenu, otherElement);
@@ -1486,7 +1536,7 @@ int main(int argc, char** argv) {
         return true;
     });
 
-    otherElement = element->AddChild("Description", ArsTimoris::UI::UIRect{{5, 60, 990, 530}}).get();
+    otherElement = element->AddChild("Description", ArsTimoris::UI::UIRect{{5, 60, 890, 535}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1504,14 +1554,14 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
+                8,
                 ArsTimoris::UI::UIAnchor::TOP_CENTER
             )
         )
     ).first->second->Hookup(gameState, levelMenu, otherElement);
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> descriptionOfClassText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-    otherElement = element->AddChild("Cost", ArsTimoris::UI::UIRect{{100, 60, 990, 190}}).get();
+    otherElement = element->AddChild("Cost", ArsTimoris::UI::UIRect{{900, 60, 295, 535}}).get();
     otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
@@ -1529,7 +1579,7 @@ int main(int argc, char** argv) {
                 "BitCrusher",
                 2.0f,
                 8,
-                6,
+                8,
                 ArsTimoris::UI::UIAnchor::TOP_CENTER
             )
         )
@@ -1544,7 +1594,7 @@ int main(int argc, char** argv) {
         size_t levelToUse = (gameState.player.classes.contains(classData.name) ? (gameState.player.classes.at(classData.name).level + 1) : 1);
         //std::cout << "Level: " << levelToUse << " : " << classPair.second.levels.size() << std::endl;
         if (classData.levels.size() >= levelToUse && classData.levels[--levelToUse].displayRequirements != nullptr) {
-            costlyClassText->SetText(gameState, std::format("\\[FCH:{}]{}"), ((classData.levels[levelToUse].applicable == nullptr || classData.levels[levelToUse].applicable(gameState, gameState.player)) ? "00,FF,00" : "FF,00,00"), classData.levels[levelToUse].displayRequirements(gameState, gameState.player));
+            costlyClassText->SetText(gameState, std::format("\\[FCH:{}]{}", ((classData.levels[levelToUse].applicable == nullptr || classData.levels[levelToUse].applicable(gameState, gameState.player)) ? "00,FF,00" : "FF,00,00"), classData.levels[levelToUse].displayRequirements(gameState, gameState.player)));
         }
     };
     #pragma endregion
@@ -1575,12 +1625,12 @@ int main(int argc, char** argv) {
 
     for (int32_t i = 0; i < 7; ++i) {
         inventoryRows.push_back(InventoryRow{i, nullptr, nullptr, nullptr});
-        otherElement = element->AddChild(std::format("Equipped{}", i), ArsTimoris::UI::UIRect{{5, 5.0f + 85 * i, 195, 20}}).get();
+        otherElement = element->AddChild(std::format("Equipped{}", i), ArsTimoris::UI::UIRect{{5, 5.0f + 85 * i, 195, 30}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
                 std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                    std::string_view("UIPanel"), 
+                    std::string_view("ItemFrame"), 
                     true
                 )
             )
@@ -1593,7 +1643,7 @@ int main(int argc, char** argv) {
                     "BitCrusher",
                     2.0f,
                     8,
-                    6,
+                    8,
                     ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
                 )
             )
@@ -1609,12 +1659,12 @@ int main(int argc, char** argv) {
         });
         inventoryRows.back().equipped = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{200, 5.0f + 85 * i, 800, 20}}).get();
+        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{200, 5.0f + 85 * i, 800, 30}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
                 std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                    std::string_view("UIPanel"), 
+                    std::string_view("ItemFrame"), 
                     true
                 )
             )
@@ -1627,19 +1677,19 @@ int main(int argc, char** argv) {
                     "BitCrusher",
                     2.0f,
                     8,
-                    6,
+                    8,
                     ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
                 )
             )
         ).first->second->Hookup(gameState, inventoryMenu, otherElement);
         inventoryRows.back().header = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
 
-        otherElement = element->AddChild(std::format("Use{}", i), ArsTimoris::UI::UIRect{{1000, 5.0f + 85 * i, 195, 20}}).get();
+        otherElement = element->AddChild(std::format("Use{}", i), ArsTimoris::UI::UIRect{{1000, 5.0f + 85 * i, 195, 30}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
                 std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                    std::string_view("UIPanel"), 
+                    std::string_view("ItemFrame"), 
                     true
                 )
             )
@@ -1652,7 +1702,7 @@ int main(int argc, char** argv) {
                     "BitCrusher",
                     2.0f,
                     8,
-                    6,
+                    8,
                     ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
                 )
             )
@@ -1676,12 +1726,12 @@ int main(int argc, char** argv) {
             return true;
         });
         
-        otherElement = element->AddChild(std::format("Description{}", i), ArsTimoris::UI::UIRect{{5, 25.0f + 85 * i, 1190, 60}}).get();
+        otherElement = element->AddChild(std::format("Description{}", i), ArsTimoris::UI::UIRect{{5, 35.0f + 85 * i, 1190, 50}}).get();
         otherElement->components.emplace(std::piecewise_construct, 
             std::forward_as_tuple("Texture"), 
             std::forward_as_tuple(
                 std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                    std::string_view("UIPanel"), 
+                    std::string_view("GoldPanel"), 
                     true
                 )
             )
@@ -1694,12 +1744,165 @@ int main(int argc, char** argv) {
                     "BitCrusher",
                     2.0f,
                     8,
-                    6,
+                    8,
                     ArsTimoris::UI::UIAnchor::TOP_LEFT
                 )
             )
         ).first->second->Hookup(gameState, inventoryMenu, otherElement);
         inventoryRows.back().description = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    }
+    #pragma endregion
+    
+    #pragma region Shop Menu
+    shopMenu->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("ShopPanel"), 
+        std::forward_as_tuple(
+            std::string_view("ShopPanel"), 
+            ArsTimoris::UI::UIRect{{0, 140, 1200, 600}}
+        )
+    );
+    element = &shopMenu->uiElements.at("ShopPanel");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, shopMenu, element);
+
+    otherElement = element->AddChild("ShopName", ArsTimoris::UI::UIRect{{5, 5, 990, 95}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, shopMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Buy",
+                "BitCrusher",
+                2.0f,
+                8,
+                8,
+                ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+            )
+        )
+    ).first->second->Hookup(gameState, shopMenu, otherElement);
+    shopNameText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    otherElement = element->AddChild("ShopGold", ArsTimoris::UI::UIRect{{1000, 5, 190, 95}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, shopMenu, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "GP: 0",
+                "BitCrusher",
+                2.0f,
+                8,
+                8,
+                ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+            )
+        )
+    ).first->second->Hookup(gameState, shopMenu, otherElement);
+    shopGoldText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    for (int32_t i = 0; i < 6; ++i) {
+        shopCatalogs.push_back(ShopCatalogUIEntry{i, nullptr});
+        otherElement = element->AddChild(std::format("Buy{}", i), ArsTimoris::UI::UIRect{{5, 105.0f + 55 * i, 95, 50}}).get();
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Texture"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                    std::string_view("UIPanel"), 
+                    true
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Text"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                    "Buy",
+                    "BitCrusher",
+                    2.0f,
+                    8,
+                    8,
+                    ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
+            int32_t ia = stoi(a_element->id.substr(3, 1));
+            shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
+            /*
+            if (shop->catalog[option].cost <= a_gameState.player.gold) {
+                a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
+                a_gameState.player.AddItem(shop->catalog[option].stack.itemID, 1);
+                std::cout << "You bought 1 " << ITEM_DATA[shop->catalog[option].stack.itemID].name << " for " << shop->catalog[option].cost << " gold." << std::endl;
+                if (--shop->catalog[option].stack.stackSize <= 0) {
+                    shop->catalog.erase(shop->catalog.begin() + option);
+                }
+            } else {
+                std::cout << "You do not have enough gold." << std::endl;
+            }
+            */
+            if (inventoryRows[ia].index < shop->catalog.size()) {
+                int32_t option = shopCatalogs[ia].index;
+                if (shop->catalog[option].cost <= a_gameState.player.gold) {
+                    a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
+                    a_gameState.player.AddItem(shop->catalog[option].stack.itemID, 1);
+                    std::cout << "You bought 1 " << GameData::ITEM_DATA[shop->catalog[option].stack.itemID].name << " for " << shop->catalog[option].cost << " gold." << std::endl;
+                    if (--shop->catalog[option].stack.stackSize <= 0) {
+                        shop->catalog.erase(shop->catalog.begin() + option);
+                    }
+                    UpdateShopMenu();
+                } else {
+                    std::cout << "You do not have enough gold." << std::endl;
+                }
+            }
+            return true;
+        });
+
+        otherElement = element->AddChild(std::format("Header{}", i), ArsTimoris::UI::UIRect{{100, 105.0f + 55 * i, 400, 50}}).get();
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Texture"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                    std::string_view("UIPanel"), 
+                    true
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        otherElement->components.emplace(std::piecewise_construct, 
+            std::forward_as_tuple("Text"), 
+            std::forward_as_tuple(
+                std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                    "Bla",
+                    "BitCrusher",
+                    2.0f,
+                    8,
+                    8,
+                    ArsTimoris::UI::UIAnchor::MIDDLE_LEFT
+                )
+            )
+        ).first->second->Hookup(gameState, shopMenu, otherElement);
+        shopCatalogs.back().header = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     }
     #pragma endregion
     #pragma endregion
@@ -1715,6 +1918,7 @@ int main(int argc, char** argv) {
     uint64_t lastTime = SDL_GetTicks();
     gameState.inputData.keys = SDL_GetKeyboardState(&gameState.inputData.numKeys);
     gameState.inputData.oldKeys = (bool*)malloc(gameState.inputData.numKeys);
+    float totalTime = 0.0f;
 
     #pragma region Commands
     ArsTimoris::Commands::CommandHandler commandHandler = ArsTimoris::Commands::CommandHandler();
@@ -1790,6 +1994,7 @@ int main(int argc, char** argv) {
     std::thread inputThread([&]() {
         std::string command = "";
         while (gameState.running) {
+            /*
             boost::asio::ip::tcp::socket socket(ioContext);
             acceptor.accept(socket);
             boost::system::error_code error;
@@ -1805,6 +2010,9 @@ int main(int argc, char** argv) {
             } else if (error) {
                 throw boost::system::system_error(error);
             }
+            */
+
+            std::getline(std::cin, command);
 
             if (command.empty()) {
                 continue;
@@ -1842,6 +2050,7 @@ int main(int argc, char** argv) {
         //std::cout << "Very Start" << std::endl;
         deltaTime = SDL_GetTicks() - lastTime;
         lastTime = SDL_GetTicks();
+        totalTime += 0.001f * (float)deltaTime;
         //std::cout << "Prae Cache Input" << std::endl;
         gameState.CacheInputState();
         //std::cout << "Post Cache Input" << std::endl;
@@ -1972,11 +2181,11 @@ int main(int argc, char** argv) {
                                 }
                                 case Menu::COMBAT: {
                                     if (!messageOverlay->enabled) {
-                                        if (event.key.key == SDLK_A) {
+                                        if (event.key.key == SDLK_S) {
                                             if (--choice < 0) {
                                                 choice = gameState.player.actions.size() - 1;
                                             }
-                                        } else if (event.key.key == SDLK_D) {
+                                        } else if (event.key.key == SDLK_W) {
                                             if (++choice >= gameState.player.actions.size()) {
                                                 choice = 0;
                                             }
@@ -1988,6 +2197,7 @@ int main(int argc, char** argv) {
                                     if (!messageOverlay->enabled) {
                                         if (event.key.key == SDLK_ESCAPE) {
                                             levelMenu->enabled = false;
+                                            statsMenu->enabled = true;
                                             gameState.menu = Menu::STATS;
                                         } else if (event.key.key == SDLK_A) {
                                             if (--classChoice < 0) {
@@ -2022,6 +2232,23 @@ int main(int argc, char** argv) {
                                     if (event.key.key == SDLK_ESCAPE) {
                                         statsMenu->enabled = false;
                                         gameState.menu = Menu::NONE;
+                                    }
+                                    break;
+                                }
+                                case Menu::SHOP: {
+                                    if (event.key.key == SDLK_ESCAPE) {
+                                        shopMenu->enabled = false;
+                                        gameState.menu = Menu::NONE;
+                                    } else if (event.key.key == SDLK_A) {
+                                        if (--shopChoice < 0) {
+                                            shopChoice = 0;
+                                        }
+                                        UpdateShopMenu();
+                                    } else if (event.key.key == SDLK_D) {
+                                        if (++shopChoice >= (int32_t)ceilf((float)shop->catalog.size() / 6.0f)) {
+                                            --shopChoice;
+                                        }
+                                        UpdateShopMenu();
                                     }
                                     break;
                                 }
@@ -2084,14 +2311,14 @@ int main(int argc, char** argv) {
                             float yi = 30.0f;
                             std::cout << "Moogle" << std::endl;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
-                                std::shared_ptr<ArsTimoris::Assets::TextureAsset> texture = gameState.assets.textures.at(room->inhabitants[i].texture);
-                                std::println("({}, {}, {}, {}) {}", xi, yi, texture->w * 2, texture->h * 2, i);
+                                std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> renderer = gameState.assets.npcRenderers.at(room->inhabitants[i].texture);
+                                std::println("({}, {}, {}, {}) {}", xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, renderer->width * 2, renderer->height * 2, i);
                                 combatNPCs.push_back(NPCDisplay(gameState,
-                                    SDL_FRect{xi, yi, texture->w * 2, texture->h * 2}, 
+                                    SDL_FRect{xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, (float)renderer->width * 2, (float)renderer->height * 2}, 
                                     room->inhabitants[i].armor,
-                                    texture, i
+                                    renderer, i
                                 ));
-                                xi += texture->w * 2;
+                                //xi += texture->w * 2;
                             }
                             break;
                         }
@@ -2478,6 +2705,17 @@ int main(int argc, char** argv) {
                                 } else {
                                     gameState.player.TurnEnd(gameState);
                                 }
+                            } else {
+                                bool ok = false;
+                                for (int32_t j = room->inhabitants.size() - 1; j > -1; --j) {
+                                    if (room->inhabitants[j].curHP > 0) {
+                                        ok = true;
+                                        break;
+                                    }
+                                }
+                                if (!ok) {
+                                    gameState.player.usedTurns = gameState.player.turns;
+                                }
                             }
                         } else {
                             gameState.menu = Menu::NONE;
@@ -2678,6 +2916,7 @@ int main(int argc, char** argv) {
                 switch (gameState.menu) {
                     case Menu::NONE: {
                         SDL_FRect thingy = {0, 140, 1200, 600};
+                        //std::println("{}: {}", GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->name);
                         SDL_RenderTexture(gameState.renderer, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->texture, NULL, &thingy);
                         break;
                     }
@@ -2716,7 +2955,8 @@ int main(int argc, char** argv) {
                             SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
                             //std::println("({}, {}, {}, {}) {}", combatNPCs[i].area.x, combatNPCs[i].area.y, combatNPCs[i].area.w, combatNPCs[i].area.h, i);
                             //SDL_RenderFillRect(gameState.renderer, &combatNPCs[i].area);
-                            SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
+                            combatNPCs[i].renderer->Render(gameState.renderer, combatNPCs[i].area, totalTime);
+                            //SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
 
                             
 
@@ -2777,7 +3017,16 @@ int main(int argc, char** argv) {
         //std::cout << "Very end" << std::endl;
     }
 
-    inputThread.join();
+    //for (int i = 0; i < 100; ++i) {
+    //    std::cin.putback('\n');
+    //    std::cout << "Pushed a new line." << std::endl;
+    //}
+    //
+    //std::cout << "Should join." << std::endl;
+    //
+    //inputThread.join();
+
+    // I give up, just let the OS clean it up.
 
     DebugLogging::CloseParserLog();
 

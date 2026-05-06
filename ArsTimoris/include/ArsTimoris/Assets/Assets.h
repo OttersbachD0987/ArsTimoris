@@ -9,6 +9,7 @@
 #include <ArsTimoris/Assets/TextureAsset.h>
 #include <ArsTimoris/Assets/LazyFontAsset.h>
 #include <ArsTimoris/Assets/FontAtlasAsset.h>
+#include <ArsTimoris/Assets/NPCRendererAsset.h>
 
 namespace ArsTimoris {
     namespace UI {
@@ -32,6 +33,8 @@ namespace ArsTimoris {
             std::unordered_map<std::string, std::shared_ptr<AudioAsset>> sounds;
             /// @brief 
             std::unordered_map<std::string, std::shared_ptr<TextureAsset>> textures;
+            /// @brief 
+            std::unordered_map<std::string, std::shared_ptr<NPCRendererAsset>> npcRenderers;
             /// @brief 
             ArsTimoris::UI::UIManager* uiManager;
 
@@ -59,6 +62,10 @@ namespace ArsTimoris {
             /// @param  
             /// @param  
             void AddSound(SDL_AudioDeviceID, std::string, std::string);
+            /// @brief 
+            /// @param a_path 
+            /// @param a_name 
+            void AddNPCRenderer(std::string a_path, std::string a_name);
             /// @brief 
             void Uninitialize(void);
         };

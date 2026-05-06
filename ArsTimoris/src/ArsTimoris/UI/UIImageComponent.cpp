@@ -11,7 +11,7 @@ namespace ArsTimoris::UI {
     void UIImageComponent::Hookup(GameState& a_gameState, UILayer* a_uiLayer, UIElement* a_element) {
         if (nineSliced) {
             a_element->onRender.emplace_back([this](GameState& a_gameState, UILayer* a_uiLayer, UIElement* a_element) {
-                SDL_RenderTexture9Grid(a_gameState.renderer, a_gameState.assets.textures.at(this->texture)->texture, NULL, 6, 6, 6, 6, 2, &a_element->displayArea.rect);
+                SDL_RenderTexture9Grid(a_gameState.renderer, a_gameState.assets.textures.at(this->texture)->texture, NULL, 6.0f, 6.0f, 6.0f, 6.0f, 2.0f, &a_element->displayArea.rect);
             });
         } else {
             a_element->onRender.emplace_back([this](GameState& a_gameState, UILayer* a_uiLayer, UIElement* a_element) {

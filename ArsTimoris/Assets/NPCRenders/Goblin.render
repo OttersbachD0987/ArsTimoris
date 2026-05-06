@@ -1,0 +1,9 @@
+meta:
+20, 35;
+
+steps:
+- Image(
+    Goblin;
+    255;
+    blend;
+)[]

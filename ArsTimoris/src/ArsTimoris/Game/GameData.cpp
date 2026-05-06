@@ -922,6 +922,8 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
                 return true;
             },
             [](GameState& a_gameState) {
+                a_gameState.menu = Menu::SHOP;
+                /*
                 size_t option = 0;
                 while (option != 3) {
                     ShopInstance* shop = ((ShopInstance*)a_gameState.rooms[a_gameState.curRoom].data.at("Shop"));
@@ -956,6 +958,7 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
                             break;
                     }
                 }
+                */
             }
         }
     }

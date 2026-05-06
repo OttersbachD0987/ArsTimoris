@@ -1,0 +1,16 @@
+meta:
+22, 49;
+
+steps:
+- Image(
+    Reaper;
+    255;
+    blend;
+)[]
+- Image(
+    Reaper_Overlay;
+    75;
+    add;
+)[
+    sway_sin_x(0.5, 2.0);
+]

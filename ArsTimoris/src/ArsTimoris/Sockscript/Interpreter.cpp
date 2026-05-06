@@ -1172,6 +1172,8 @@ void Interpreter::ParseObjectName(GameState& a_gameState, InterpreterContext& a_
     } else if (a_context.stringRegisters[a_context.stringRegister] == "gameState") {
         a_context.stringRegister += 1;
         a_context.mode.push_back(ReaderMode::OBJECT);
+    } else {
+        a_context.stringRegisters[a_context.stringRegister] += '.';
     }
 }
 
@@ -1625,33 +1627,37 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
         a_context.stringRegister += 1;
     } else if (object == "room") {
         if (method == "AddInhabitant") {
-            if (argc == 4) {
+            if (argc == 6) {
                 std::string entityTemplate = FormatString(a_gameState, a_context, args[0]);
                 std::string npcTemplate = FormatString(a_gameState, a_context, args[1]);
-                std::string texture = FormatString(a_gameState, a_context, args[2]);
-                std::string modifierTemplates = FormatString(a_gameState, a_context, args[3]);
+                float x = ParseFloatExpression(a_gameState, a_context, args[2]);
+                float y = ParseFloatExpression(a_gameState, a_context, args[3]);
+                std::string texture = FormatString(a_gameState, a_context, args[4]);
+                std::string modifierTemplates = FormatString(a_gameState, a_context, args[5]);
                 std::vector<std::string> modifiers = std::vector<std::string>();
                 size_t modifierCount = SplitString(modifierTemplates, ":", modifiers);
                 #ifdef SCRIPT_PARSER_DEBUG_LOGGING
-                DebugLogging::ParsingOut << std::format("{}({})[{}] = {}", entityTemplate, npcTemplate, texture, modifierTemplates) << std::endl;
+                DebugLogging::ParsingOut << std::format("{}({})[{}]<{}, {}> = {}", entityTemplate, npcTemplate, texture, x, y, modifierTemplates) << std::endl;
                 #endif
                 
-                NPCData npc = NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), texture);
+                NPCData npc = NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), x, y, texture);
                 for (const std::string& modifier : modifiers) {
                     npc = GameData::NPC_MODIFIERS.at(modifier)(npc);
                 }
 
                 a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(npc);
-            } else if (argc == 3) {
+            } else if (argc == 5) {
                 std::string entityTemplate = FormatString(a_gameState, a_context, args[0]);
                 std::string npcTemplate = FormatString(a_gameState, a_context, args[1]);
-                std::string texture = FormatString(a_gameState, a_context, args[2]);
+                float x = ParseFloatExpression(a_gameState, a_context, args[2]);
+                float y = ParseFloatExpression(a_gameState, a_context, args[3]);
+                std::string texture = FormatString(a_gameState, a_context, args[4]);
                 #ifdef SCRIPT_PARSER_DEBUG_LOGGING
-                DebugLogging::ParsingOut << std::format("{}({})[{}]", entityTemplate, npcTemplate, texture) << std::endl;
+                DebugLogging::ParsingOut << std::format("{}({})[{}]<{}, {}>", entityTemplate, npcTemplate, texture, x, y) << std::endl;
                 #endif
-                a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), texture));
+                a_gameState.rooms[a_gameState.curRoom].inhabitants.push_back(NPCData(GameData::ENTITY_TEMPLATES.at(entityTemplate), &GameData::NPC_TEMPLATES.at(npcTemplate), x, y, texture));
             } else {
-                DebugLogging::ParsingOut << "[ERROR]: room.AddInhabitant must have 3 or 4 arguments, this call has " << argc << "." << std::endl;
+                DebugLogging::ParsingOut << "[ERROR]: room.AddInhabitant must have 5 or 6 arguments, this call has " << argc << "." << std::endl;
             }
         } else if (method == "AddRoomAction") {
             if (argc == 1) {

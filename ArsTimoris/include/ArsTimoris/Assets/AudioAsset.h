@@ -32,6 +32,8 @@ namespace ArsTimoris {
             /// @brief 
             /// @param a_audioDevice 
             void Play(SDL_AudioDeviceID a_audioDevice);
+            /// @brief
+            void Stop(void);
             /// @brief 
             void Unload(void) override;
         };

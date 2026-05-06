@@ -84,7 +84,7 @@ CONTINUE;
     } else {
         hpGain<uint32> = mathi.Min(player.maxHP - player.curHP, 25);
         console.Print("you have regained {uint32@hpGain@} health.\n");
-        player.Heal(hpGain);
+        player.Heal(uint32@hpGain@);
         if (player.curHP == player.maxHP) {
             console.Print("Your health is fully replinished.\n");
         } end;
@@ -104,9 +104,9 @@ CONTINUE;
 }}
 
 {{
-    room.AddInhabitant("Goblin", "Grunt", "Goblin", "Grunt");
-    room.AddInhabitant("Goblin", "Grunt", "Goblin", "Grunt");
-    room.AddInhabitant("Goblin", "Shaman", "Goblin", "Shaman");
+    room.AddInhabitant("Goblin", "Grunt", 0, 0, "Goblin", "Grunt");
+    room.AddInhabitant("Goblin", "Grunt", 40.0, 0, "Goblin", "Grunt");
+    room.AddInhabitant("Goblin", "Shaman", 20.0, 0, "GoblinShaman", "Shaman");
     room.AddRoomAction("Treasure Trove");
     room.SetFlag("TreasureTrove_Count", 3);
     room.SetFlag("TreasureTrove_Dice", 12);
@@ -124,8 +124,8 @@ CONTINUE;
 }}
 
 {{
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Shaman", "Goblin", "Shaman");
+    room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Shaman", 40, 0, "GoblinShaman", "Shaman");
     room.AddRoomAction("Treasure Trove");
     room.SetFlag("TreasureTrove_Count", 2);
     room.SetFlag("TreasureTrove_Dice", 20);
@@ -188,8 +188,8 @@ CONTINUE;
 }}
 
 {{
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Priest", "Goblin", "Priest");
+    room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Priest", 40, 0, "GoblinPriest", "Priest");
     room.AddRoomAction("Treasure Trove");
     room.SetFlag("TreasureTrove_Count", 4);
     room.SetFlag("TreasureTrove_Dice", 12);
@@ -207,9 +207,9 @@ CONTINUE;
 }}
 
 {{
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Priest", "Goblin", "Priest:Elder");
+    room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Priest", 20, 0, "GoblinPriest", "Priest:Elder");
     room.AddRoomAction("Treasure Trove");
     room.SetFlag("TreasureTrove_Count", 4);
     room.SetFlag("TreasureTrove_Dice", 16);
@@ -231,10 +231,10 @@ CONTINUE;
 }}
 
 {{
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Goblin", "Squire", "Goblin", "Squire");
-    room.AddInhabitant("Revenant", "Reaper", "Goblin");
+    room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
+    room.AddInhabitant("Goblin", "Squire", 80, 0, "Goblin", "Squire");
+    room.AddInhabitant("Revenant", "Reaper", 40, 0, "Reaper");
     room.AddRoomAction("Treasure Trove");
     room.SetFlag("TreasureTrove_Count", 5);
     room.SetFlag("TreasureTrove_Dice", 16);

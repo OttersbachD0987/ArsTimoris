@@ -14,11 +14,13 @@ namespace ArsTimoris::Assets {
         }
 
         SDL_SetTextureScaleMode(this->texture, SDL_SCALEMODE_NEAREST);
-        //SDL_SetTextureBlendMode(this->texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureBlendMode(this->texture, SDL_BLENDMODE_BLEND);
 
         if (!SDL_GetTextureSize(this->texture, &this->w, &this->h)) {
             std::cout << "Error getting size: " << SDL_GetError() << std::endl;
         }
+
+        std::cout << "Texture loaded of size (" << this->w << ", " << this->h << ")" << std::endl;
     }
 
     void ArsTimoris::Assets::TextureAsset::Unload(void) {
