@@ -780,7 +780,7 @@ std::vector<ItemData> GameData::ITEM_DATA = {
                 return a_gameState.player.xp > 8;
             },
             [](GameState& a_gameState, const ItemStack& a_itemStack, size_t index = -1) {
-                std::cout << "You flip through the pages of this wretched tome..." << std::endl;
+                a_gameState.AddMessage("You flip through the pages of this wretched tome...\n");
                 int32_t xpCost = a_gameState.RollDice(1, 8);
                 switch (a_gameState.RollDice(1, 20)) {
                     case 1:
@@ -791,7 +791,7 @@ std::vector<ItemData> GameData::ITEM_DATA = {
                     case 6:
                     case 7:
                         a_gameState.player.RegainMana(xpCost * a_gameState.RollDice(1, 4));
-                        std::cout << "You feel your mana rejuvinate." << std::endl;
+                        a_gameState.AppendMessage("You feel your mana rejuvinate.");
                         break;
                     case 8:
                     case 9:
@@ -801,22 +801,22 @@ std::vector<ItemData> GameData::ITEM_DATA = {
                     case 13:
                     case 14:
                         a_gameState.player.Heal(xpCost * a_gameState.RollDice(1, 4));
-                        std::cout << "You feel your flesh knit together." << std::endl;
+                        a_gameState.AppendMessage("You feel your flesh knit together.");
                         break;
                     case 15:
                     case 16:
                     case 17:
                         a_gameState.player.AddSkillModifier("Knowledge of Death", xpCost);
-                        std::cout << "You feel your understanding of death increase." << std::endl;
+                        a_gameState.AppendMessage("You feel your understanding of death increase.");
                         break;
                     case 18:
                     case 19:
                         a_gameState.player.armor += 1;
-                        std::cout << "You feel your skin calcify." << std::endl;
+                        a_gameState.AppendMessage("You feel your skin calcify.");
                         break;
                     case 20:
                         a_gameState.player.Hurt(xpCost * a_gameState.RollDice(1, 3));
-                        std::cout << "You feel your lungs collapse, before ancient air refills them... Something has changed." << std::endl;
+                        a_gameState.AppendMessage("You feel your lungs collapse, before ancient air refills them... Something has changed.");
                         break;
                 }
                 a_gameState.player.xp -= xpCost;
@@ -904,13 +904,10 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
                     !a_gameState.rooms[a_gameState.curRoom].flags.contains("TreasureTrove_Looted");
             },
             [](GameState& a_gameState) {
-                //std::cout << "We are in." << std::endl;
-                //std::cout << std::format("Running with {}d{}", a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice")) << std::endl;
                 a_gameState.rooms[a_gameState.curRoom].flags.emplace("TreasureTrove_Looted", 0);
                 int32_t goldAmount = a_gameState.RollDice(a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice"));
                 a_gameState.player.gold += goldAmount;
                 a_gameState.AddMessage(std::format("You find {} ({}d{}) gold.", goldAmount, a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Count"), a_gameState.rooms[a_gameState.curRoom].flags.at("TreasureTrove_Dice")));
-                //EatInput();
             }
         }
     },
@@ -927,42 +924,6 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
             [](GameState& a_gameState) {
                 a_gameState.menu = Menu::SHOP;
                 a_gameState.justSwapped = true;
-                /*
-                size_t option = 0;
-                while (option != 3) {
-                    ShopInstance* shop = ((ShopInstance*)a_gameState.rooms[a_gameState.curRoom].data.at("Shop"));
-                    std::cout << "-------------------------------\n\x1b[1m" << shop->shopName << "\x1b[22m\n\nOptions:\n1) Buy\n2) Sell\n3) Exit\n\nOption: ";
-                    SafeInput<size_t>(option);
-                    switch (option) {
-                        case 1:
-                            std::cout << "-------------------------------\nGold: " << a_gameState.player.gold << "\n\nCatalog:\n";
-                            for (size_t i = 0; i < shop->catalog.size(); ++i) {
-                                const ItemData& itemType = ITEM_DATA[shop->catalog[i].stack.itemID];
-                                std::cout << (i + 1) << ") " << itemType.name << " (" << shop->catalog[i].cost << ") x" << shop->catalog[i].stack.stackSize << "\n";
-                            }
-                            std::cout << (shop->catalog.size() + 1) << ") Back\n\nOption: ";
-                            SafeInput<size_t>(option);
-
-                            if (--option < shop->catalog.size()) {
-                                if (shop->catalog[option].cost <= a_gameState.player.gold) {
-                                    a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
-                                    a_gameState.player.AddItem(shop->catalog[option].stack.itemID, 1);
-                                    std::cout << "You bought 1 " << ITEM_DATA[shop->catalog[option].stack.itemID].name << " for " << shop->catalog[option].cost << " gold." << std::endl;
-                                    if (--shop->catalog[option].stack.stackSize <= 0) {
-                                        shop->catalog.erase(shop->catalog.begin() + option);
-                                    }
-                                } else {
-                                    std::cout << "You do not have enough gold." << std::endl;
-                                }
-                            }
-                            option = 0;
-                            break;
-                        case 2:
-                            std::cout << "They do not wish to buy anything from you..." << std::endl;
-                            break;
-                    }
-                }
-                */
             }
         }
     }
@@ -1109,16 +1070,16 @@ std::unordered_map<std::string, NPCTemplate> GameData::NPC_TEMPLATES = {
                     a_npc.manaSickness += 1;
                     a_npc.DrainMana(10);
                     a_gameState.player.Hurt((int32_t)amount);
-                    std::cout << "The " << a_npc.name << " silently holds vigil, and " << healed << " stand taller as you feel your life being pulled out of you... You take " << amount <<  " damage." << std::endl;
+                    a_gameState.AddMessage(std::format("The {} silently holds vigil, and {} stand taller as you feel your life being pulled out of you... You take {} damage.", a_npc.name, healed, amount));
                 }
 
-                std::cout << "The " << a_npc.name << " swings their scythe at the player and ";
+                a_gameState.AddMessage(std::format("The {} swings their scythe at the player and ", a_npc.name));
                 if (a_gameState.RollDice(1, 20) + 4 >= a_gameState.player.GetEffectiveArmor()) {
                     int32_t damage = a_gameState.RollDice(2, 8) + 3;
                     a_gameState.player.Hurt(damage);
-                    std::cout << "hits, dealing " << damage << " damage." << std::endl;
+                    a_gameState.AppendMessage(std::format("hits, dealing {} damage.", damage));
                 } else {
-                    std::cout << "misses." << std::endl;
+                    a_gameState.AppendMessage("misses.");
                 }
             }
         }

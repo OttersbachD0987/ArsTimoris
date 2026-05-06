@@ -28,8 +28,6 @@
 #include <ArsTimoris/Util/Input.hpp>
 #include <ArsTimoris/Util/Random.hpp>
 
-#include <boost/asio.hpp>
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_render.h>
@@ -66,10 +64,13 @@ void PrintCombatNPCData(GameState& a_gameState, const NPCData& a_npc) {
 
 int main(int argc, char** argv) {
     DebugLogging::OpenParserLog(std::filesystem::current_path() / "Logs" / "ParserLog.log");
-    std::filesystem::path dataPath = std::filesystem::current_path().append("Assets").append("Data");
-    //DataComponents::DataContainer container = DataComponents::ParseDataFile(std::filesystem::current_path().append("test.data"));
-    //std::cout << std::format("Pre loading Starts ({})", dataPath.string()) << std::endl;
-    for (const StartData& start : LoadStartData(dataPath / "starts.data")) {
+    std::filesystem::path BaseAssetsPath = std::filesystem::current_path() / "Assets";
+    std::filesystem::path AssetsPath = BaseAssetsPath / "Assets";
+    std::filesystem::path ResourcesPath = BaseAssetsPath / "Resources";
+    std::filesystem::path DataPath = BaseAssetsPath / "Data";
+
+    std::println("Prae loading Starts");
+    for (const StartData& start : LoadStartData(DataPath / "starts.data")) {
         GameState::Starts.push_back(start);
     }
 
@@ -79,13 +80,13 @@ int main(int argc, char** argv) {
     #pragma endregion
 
     #pragma region Initial Setup
-    //std::cout << std::format("Pre loading Encounters ({})", dataPath.string()) << std::endl;
-    for (const Encounter& encounter : LoadEncountersData(dataPath / "encounters.data")) {
+    std::println("Prae loading Encounters");
+    for (const Encounter& encounter : LoadEncountersData(DataPath / "encounters.data")) {
         GameData::ENCOUNTERS.push_back(encounter);
     }
 
-    //std::cout << std::format("Pre loading Entity Templates ({})", dataPath.string()) << std::endl;
-    for (const std::pair<std::string, EntityTemplate>& entityTemplate : LoadEntityData(dataPath / "entities.data")) {
+    std::println("Prae loading Entity Templates");
+    for (const std::pair<std::string, EntityTemplate>& entityTemplate : LoadEntityData(DataPath / "entities.data")) {
         GameData::ENTITY_TEMPLATES.emplace(entityTemplate);
     }
 
@@ -107,23 +108,23 @@ int main(int argc, char** argv) {
             SDL_SetTextureScaleMode(armorTexture, SDL_SCALEMODE_NEAREST);
             SDL_DestroySurface(armorSurface);
         }
+
+        void UpdateArmor(GameState& a_gameState, int32_t a_armor) {
+            SDL_DestroyTexture(armorTexture);
+            SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, area.w);
+            this->armorArea = SDL_FRect{area.x, area.y, (float)armorSurface->w * 2.0f, (float)armorSurface->h * 2.0f};
+            this->armorTexture = SDL_CreateTextureFromSurface(a_gameState.renderer, armorSurface);
+            SDL_SetTextureScaleMode(armorTexture, SDL_SCALEMODE_NEAREST);
+            SDL_DestroySurface(armorSurface);
+        }
     };
     std::vector<NPCDisplay> combatNPCs = std::vector<NPCDisplay>();
     
-    //std::cout << "The answer is: " << (std::pow(29, 452)) << "." << std::endl;
-
-    //for (const std::pair<size_t, std::uniform_int_distribution<uint32_t>&>& dice : DICE) {
-    //    std::cout << "DIE " << dice.first << "\n====================" << std::endl;
-    //    for (int32_t i = 0; i < 50; ++i) {
-    //        std::cout << (i + 1) << ") " << dice.second(gameState.generator) << "/" << dice.first << std::endl;
-    //    }
-    //    std::cout << "====================" << std::endl;
-    //}
-
     SDL_SetAppMetadata("Ars Timoris", "0.1.0.0", "com.darthsae.ArsTimoris");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Darthsae");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game");
     SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://github.com/OttersbachD0987/ArsTimoris");
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         std::cout << "Error: " << SDL_GetError() << std::endl;
     }
@@ -140,14 +141,15 @@ int main(int argc, char** argv) {
 
     gameState.audioDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, NULL);
     
-    std::cout << "Pre Assets" << std::endl;
+    std::println("Prae Assets");
     gameState.assets = ArsTimoris::Assets::Assets();
-    std::cout << "Pre UI Manager" << std::endl;
+
+    std::println("Prae UI Manager");
     gameState.uiManager = ArsTimoris::UI::UIManager();
     gameState.assets.uiManager = &gameState.uiManager;
 
-    std::cout << "Pre Base Assets" << std::endl;
-    for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path().append("Assets"))) {
+    std::println("Prae Resources");
+    for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(ResourcesPath)) {
         if (dir_entry.path().has_extension()) {
             if (dir_entry.path().extension().string() == ".png") {
                 gameState.assets.AddTexture(gameState.renderer, dir_entry.path().string(), dir_entry.path().stem().string());
@@ -155,37 +157,24 @@ int main(int argc, char** argv) {
                 gameState.assets.AddFontAtlas(gameState.renderer, dir_entry.path().string(), dir_entry.path().stem().string());
             } else if (dir_entry.path().extension().string() == ".ttf") {
                 gameState.assets.AddLazyFont(dir_entry.path().string(), dir_entry.path().stem().string());
-
-                // Deprecated
-                /*
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 12), 12);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 16), 16);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 18), 18);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 20), 20);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 24), 24);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 30), 30);
-                gameState.assets.AddFont(dir_entry.path().string(), std::format("{}-{}", dir_entry.path().stem().string(), 36), 36);
-                */
             } else if (dir_entry.path().extension().string() == ".wav") {
                 gameState.assets.AddSound(gameState.audioDevice, dir_entry.path().string(), dir_entry.path().stem().string());
             }
         }
     }
 
-    std::cout << "Pre Data Assets" << std::endl;
-    for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(std::filesystem::current_path().append("Assets"))) {
+    std::println("Prae Data Assets");
+    for (std::filesystem::directory_entry const& dir_entry : std::filesystem::recursive_directory_iterator(AssetsPath)) {
         if (dir_entry.path().has_extension()) {
             if (dir_entry.path().extension().string() == ".render") {
                 gameState.assets.AddNPCRenderer(dir_entry.path().string(), dir_entry.path().stem().string());
+            } else if (dir_entry.path().extension().string() == ".particle") {
+                gameState.assets.AddParticle(dir_entry.path().string(), dir_entry.path().stem().string());
             }
         }
     }
     #pragma endregion
 
-
-    boost::asio::io_context ioContext;
-    boost::asio::ip::tcp::acceptor acceptor = boost::asio::ip::tcp::acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 25000));
-    
     #pragma region Setup Vars
     RoomInstance* room = nullptr;
     int32_t choice;
@@ -195,23 +184,16 @@ int main(int argc, char** argv) {
     }
     #pragma endregion
 
-    struct InventoryRow {
-    public:
-        int32_t index;
-        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> equipped;
-        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> header;
-        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> description;
-    };
     
     std::function<void(GameState&)> menuChangedCallback = nullptr;
     bool menuToChange = false;
 
     #pragma region UI
+    #pragma region Layers
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Message Overlay"), 
         std::forward_as_tuple(std::string_view("Message Overlay"))
     );
-
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Main Menu"), 
         std::forward_as_tuple(std::string_view("Main Menu"))
@@ -257,12 +239,8 @@ int main(int argc, char** argv) {
         std::forward_as_tuple(std::string_view("Inventory Menu"))
     );
 
-    ArsTimoris::UI::UIElement* element;
-    ArsTimoris::UI::UIElement* otherElement;
-
     ArsTimoris::UI::UILayer* messageOverlay = &gameState.uiManager.uiLayers.at("Message Overlay");
     messageOverlay->enabled = false;
-
     ArsTimoris::UI::UILayer* mainMenu = &gameState.uiManager.uiLayers.at("Main Menu");
     mainMenu->enabled = true;
     ArsTimoris::UI::UILayer* settingsMenu = &gameState.uiManager.uiLayers.at("Settings Menu");
@@ -285,42 +263,33 @@ int main(int argc, char** argv) {
     inventoryMenu->enabled = false;
     ArsTimoris::UI::UILayer* shopMenu = &gameState.uiManager.uiLayers.at("Shop Menu");
     shopMenu->enabled = false;
+    #pragma endregion
+
+    #pragma region UI Functions Forward Declaration
+    std::function<void(void)> UpdateTopBar;
+    std::function<void(void)> UpdateLevelUp;
+    std::function<void(void)> UpdateInventoryMenu;
+    std::function<void(void)> UpdateShopMenu;
+    #pragma endregion
+
+    ArsTimoris::UI::UIElement* element;
+    ArsTimoris::UI::UIElement* otherElement;
 
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> classesText;
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> skillsText;
-
-    
-    std::function<void(void)> UpdateLevelUp;
     int32_t classChoice = 0;
+
+    struct InventoryRow {
+    public:
+        int32_t index;
+        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> equipped;
+        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> header;
+        std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> description;
+    };
 
     std::vector<InventoryRow> inventoryRows = std::vector<InventoryRow>();
     int32_t currentInventoryPage = 0;
     
-
-    std::function<void(void)> UpdateInventoryMenu = [&](void) {
-        int32_t inventoryPages = (int32_t)ceilf((float)gameState.player.items.size() / 7.0f);
-        if (currentInventoryPage > inventoryPages) {
-            currentInventoryPage = inventoryPages;
-        }
-        int32_t startIndex = currentInventoryPage * 7;
-        for (int32_t i = 0; i < 7; ++i) {
-            inventoryRows[i].index = startIndex + i;
-            if (i + startIndex < gameState.player.items.size()) {
-                inventoryRows[i].equipped->SetText(gameState, gameState.player.equipped[i + startIndex] ? "Unequip" : "Equip");
-                inventoryRows[i].header->SetText(gameState, std::format("{} x{}/{}", GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].name, gameState.player.items[i + startIndex].stackSize, GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].maxStack));
-                std::string descriptor = GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].description;
-                for (const std::pair<std::string, int32_t>& modPair : gameState.player.items[i + startIndex].metadata) {
-                    descriptor += std::format("; {}: {}", modPair.first, modPair.second);
-                }
-                inventoryRows[i].description->SetText(gameState, descriptor);
-            } else {
-                inventoryRows[i].equipped->SetText(gameState, "-");
-                inventoryRows[i].header->SetText(gameState, "-");
-                inventoryRows[i].description->SetText(gameState, "-");
-            }
-        }
-    };
-
     struct ShopCatalogUIEntry {
     public:
         int32_t index;
@@ -329,34 +298,11 @@ int main(int argc, char** argv) {
     };
 
     std::vector<ShopCatalogUIEntry> shopCatalogs = std::vector<ShopCatalogUIEntry>();
-
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> shopNameText;
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> shopGoldText;
     int32_t shopChoice;
     int32_t shopPage = 0;
     ShopInstance* shop;
-    std::function<void(void)> UpdateShopMenu = [&](void) {
-        shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
-        shopNameText->SetText(gameState, shop->shopName);
-        int32_t shopPager = shopPage * 6;
-        for (size_t i = 0; i < 6; ++i) {
-            shopCatalogs[i].index = shopPager + i;
-            if (shopPager + i < shop->catalog.size()) {
-                shopCatalogs[i].header->SetText(gameState, std::format("{} ({}) x{}", GameData::ITEM_DATA[shop->catalog[i].stack.itemID].name, shop->catalog[i].cost, shop->catalog[i].stack.stackSize));
-                std::string descriptor = GameData::ITEM_DATA[shop->catalog[i].stack.itemID].description;
-                for (const std::pair<std::string, int32_t>& modPair : shop->catalog[i].stack.metadata) {
-                    descriptor += std::format("; {}: {}", modPair.first, modPair.second);
-                }
-                shopCatalogs[i].description->SetText(gameState, descriptor);
-            } else {
-                shopCatalogs[i].header->SetText(gameState, "-");
-                shopCatalogs[i].description->SetText(gameState, "-");
-            }
-        }
-        shopGoldText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
-    };
-
-    
 
     #pragma region Main Menu
     mainMenu->uiElements.emplace(std::piecewise_construct, 
@@ -498,8 +444,6 @@ int main(int argc, char** argv) {
             )
         )
     ).first->second->Hookup(gameState, startsMenu, element);
-    
-    //otherElement = element;
     std::shared_ptr<ArsTimoris::UI::UISliderComponent> slider = std::dynamic_pointer_cast<ArsTimoris::UI::UISliderComponent>(element->components.at("Slider"));
 
     element = startsMenu->uiElements.at("Main Panel").AddChild(std::string_view("ScrollClip"), ArsTimoris::UI::UIRect{{4, 4, 992, 392}})->AddChild(std::string_view("Scroll"), ArsTimoris::UI::UIRect{{0, 0, (float)(200 * GameState::Starts.size()), 392}}).get();
@@ -514,7 +458,6 @@ int main(int argc, char** argv) {
     ).first->second->Hookup(gameState, startsMenu, element);
     element->onRecalculate.emplace_back([slider](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element) {
         a_element->internalArea.SetX(-(slider->value));
-        //a_element->Recalculate(a_gameState, a_uiLayer);
     });
 
     std::function<void(const StartData&)> MakeStart = [&](const StartData& a_startData){
@@ -620,72 +563,9 @@ int main(int argc, char** argv) {
     };
 
     for (size_t i = 0; i < GameState::Starts.size(); ++i) {
-        //std::cout << (i + 1) << ") " << GameState::Starts[i].name << "\n- " << GameState::Starts[i].description << "\n" << std::endl;
-
         MakeStart(GameState::Starts[i]);
     }
     #pragma endregion
-    /*
-    mainMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Panel"), 
-        std::forward_as_tuple(
-            std::string_view("Panel"), 
-            ArsTimoris::UI::UIRect{{0, 0, 100, 240}}
-        )
-    );
-    element = &mainMenu->uiElements.at("Panel");
-    element->components.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Texture"), 
-        std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                std::string_view("UIPanel"), 
-                true
-            )
-        )
-    ).first->second->Hookup(gameState, mainMenu, element);
-
-    element = &*mainMenu->uiElements.at("Panel").AddChild(
-        std::string_view("Compo1"), 
-        ArsTimoris::UI::UIRect{{0, 0, 120, 100}}
-    );
-    element->components.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Texture"), 
-        std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                std::string_view("UIPanel"), 
-                true
-            )
-        )
-    ).first->second->Hookup(gameState, mainMenu, element);
-
-    element = &*mainMenu->uiElements.at("Panel").AddChild(
-        std::string_view("Compo2"), 
-        ArsTimoris::UI::UIRect{{0, 110, 100, 100}}
-    );
-    element->components.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Texture"), 
-        std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                std::string_view("UIPanel"), 
-                true
-            )
-        )
-    ).first->second->Hookup(gameState, mainMenu, element);
-
-    element = &*mainMenu->uiElements.at("Panel").AddChild(
-        std::string_view("Compo3"), 
-        ArsTimoris::UI::UIRect{{0, 220, 180, 260}}
-    );
-    element->components.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Texture"), 
-        std::forward_as_tuple(
-            std::make_shared<ArsTimoris::UI::UIImageComponent>(
-                std::string_view("UIPanel"), 
-                true
-            )
-        )
-    ).first->second->Hookup(gameState, mainMenu, element);
-    */
     
     #pragma region Room General
     roomGeneralMenu->uiElements.emplace(std::piecewise_construct, 
@@ -1940,6 +1820,61 @@ int main(int argc, char** argv) {
         shopCatalogs.back().description = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
     }
     #pragma endregion
+    
+    #pragma region UI Functions IMPL
+    UpdateTopBar = [&](void) {
+        hpText->SetText(gameState, std::format("HP: {:>3}/{:<3}", gameState.player.curHP, gameState.player.maxHP));
+        mpText->SetText(gameState, std::format("MP: {:>3}/{:<3}", gameState.player.curMana, gameState.player.maxMana));
+        acText->SetText(gameState, std::format("AC: {}", gameState.player.GetEffectiveArmor()));
+        xpText->SetText(gameState, std::format("XP: {}", gameState.player.xp));
+        gpText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
+    };
+
+    UpdateInventoryMenu = [&](void) {
+        int32_t inventoryPages = (int32_t)ceilf((float)gameState.player.items.size() / 7.0f);
+        if (currentInventoryPage > inventoryPages) {
+            currentInventoryPage = inventoryPages;
+        }
+        int32_t startIndex = currentInventoryPage * 7;
+        for (int32_t i = 0; i < 7; ++i) {
+            inventoryRows[i].index = startIndex + i;
+            if (i + startIndex < gameState.player.items.size()) {
+                inventoryRows[i].equipped->SetText(gameState, gameState.player.equipped[i + startIndex] ? "Unequip" : "Equip");
+                inventoryRows[i].header->SetText(gameState, std::format("{} x{}/{}", GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].name, gameState.player.items[i + startIndex].stackSize, GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].maxStack));
+                std::string descriptor = GameData::ITEM_DATA[gameState.player.items[i + startIndex].itemID].description;
+                for (const std::pair<std::string, int32_t>& modPair : gameState.player.items[i + startIndex].metadata) {
+                    descriptor += std::format("; {}: {}", modPair.first, modPair.second);
+                }
+                inventoryRows[i].description->SetText(gameState, descriptor);
+            } else {
+                inventoryRows[i].equipped->SetText(gameState, "-");
+                inventoryRows[i].header->SetText(gameState, "-");
+                inventoryRows[i].description->SetText(gameState, "-");
+            }
+        }
+    };
+
+    UpdateShopMenu = [&](void) {
+        shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
+        shopNameText->SetText(gameState, shop->shopName);
+        int32_t shopPager = shopPage * 6;
+        for (size_t i = 0; i < 6; ++i) {
+            shopCatalogs[i].index = shopPager + i;
+            if (shopPager + i < shop->catalog.size()) {
+                shopCatalogs[i].header->SetText(gameState, std::format("{} ({}) x{}", GameData::ITEM_DATA[shop->catalog[i].stack.itemID].name, shop->catalog[i].cost, shop->catalog[i].stack.stackSize));
+                std::string descriptor = GameData::ITEM_DATA[shop->catalog[i].stack.itemID].description;
+                for (const std::pair<std::string, int32_t>& modPair : shop->catalog[i].stack.metadata) {
+                    descriptor += std::format("; {}: {}", modPair.first, modPair.second);
+                }
+                shopCatalogs[i].description->SetText(gameState, descriptor);
+            } else {
+                shopCatalogs[i].header->SetText(gameState, "-");
+                shopCatalogs[i].description->SetText(gameState, "-");
+            }
+        }
+        shopGoldText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
+    };
+    #pragma endregion
     #pragma endregion
 
     if (gameState.uiManager.dirtyRecalculate) {
@@ -1954,6 +1889,7 @@ int main(int argc, char** argv) {
     gameState.inputData.keys = SDL_GetKeyboardState(&gameState.inputData.numKeys);
     gameState.inputData.oldKeys = (bool*)malloc(gameState.inputData.numKeys);
     float totalTime = 0.0f;
+    float deltaTimeSeconds = 0.0f;
 
     #pragma region Commands
     ArsTimoris::Commands::CommandHandler commandHandler = ArsTimoris::Commands::CommandHandler();
@@ -2088,6 +2024,15 @@ int main(int argc, char** argv) {
         }
     ));
 
+    commandHandler.AddCommand(ArsTimoris::Commands::Command(
+        "draw_hitboxes", 
+        "Toggle Draw Hitboxes cheat.",
+        [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
+            gameState.debug.drawHitboxes = !gameState.debug.drawHitboxes;
+            std::cout << "Draw Hitboxes " << (gameState.debug.drawHitboxes ? "enabled" : "disabled") << "." << std::endl;
+        }
+    ));
+
     //commandHandler.AddCommand(Command("", [&](const CommandHandler& handler, std::vector<Parameter> parameters) {}));
 
     //commandHandler.AddCommand(ArsTimoris::Commands::Command("", [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {}));
@@ -2097,24 +2042,6 @@ int main(int argc, char** argv) {
     std::thread inputThread([&]() {
         std::string command = "";
         while (gameState.running) {
-            /*
-            boost::asio::ip::tcp::socket socket(ioContext);
-            acceptor.accept(socket);
-            boost::system::error_code error;
-            boost::asio::streambuf buffer;
-            std::cout << "Connected." << std::endl;
-            boost::asio::read_until(socket, buffer, '\0');
-            command = std::string{std::istreambuf_iterator<char>(&buffer), std::istreambuf_iterator<char>()};
-            std::cout << "We read something: " << command << std::endl;
-
-            if (error == boost::asio::error::eof) {
-                std::cout << "Connection closed by peer." << std::endl;
-                continue;
-            } else if (error) {
-                throw boost::system::system_error(error);
-            }
-            */
-
             std::getline(std::cin, command);
 
             if (command.empty()) {
@@ -2150,50 +2077,53 @@ int main(int argc, char** argv) {
     bool messageOpen = false;
 
     while (gameState.running) {
-        //std::cout << "Very Start" << std::endl;
-        deltaTime = SDL_GetTicks() - lastTime;
+        // Timekeeping stuff, perhaps put this in a struct called TimeData for easier usage...?
+        totalTime += (deltaTimeSeconds = (0.001f * (float)(deltaTime = (SDL_GetTicks() - lastTime))));
         lastTime = SDL_GetTicks();
-        totalTime += 0.001f * (float)deltaTime;
-        //std::cout << "Prae Cache Input" << std::endl;
+
         gameState.CacheInputState();
-        //std::cout << "Post Cache Input" << std::endl;
+
+        std::function<void(void)> HandleMessageOverlayBounce = [&](void) {
+            gameState.messageStack.erase(gameState.messageStack.begin());
+            if (gameState.messageStack.size() <= 0) {
+                messageOverlay->enabled = false;
+                if (menuToChange) {
+                    menuChangedCallback(gameState);
+                    menuToChange = false;
+                }
+            } else {
+                messageText->SetText(gameState, gameState.messageStack[0]);
+            }
+        };
+
         if (!messageOverlay->enabled) {
             if (gameState.messageStack.size() > 0) {
                 messageOverlay->enabled = true;
-                messageText->SetText(gameState, /*&messageOverlay->uiElements.at("Message Action"),*/ gameState.messageStack[0]);
+                messageText->SetText(gameState, gameState.messageStack[0]);
             } else if (menuToChange) {
                 menuChangedCallback(gameState);
                 menuToChange = false;
             }
         }
+
         while (SDL_PollEvent(&event)) {
             gameState.inputData.mouse = SDL_GetMouseState(&gameState.inputData.mousePos.x, &gameState.inputData.mousePos.y);
             switch (event.type) {
-                case SDL_EVENT_QUIT:
+                case SDL_EVENT_QUIT: {
                     gameState.running = false;
                     break;
-                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                }
+                case SDL_EVENT_MOUSE_BUTTON_DOWN: {
                     switch (event.button.button) {
-                        case SDL_BUTTON_LEFT:
+                        case SDL_BUTTON_LEFT: {
                             if (messageOverlay->enabled) {
-                                std::cout << "Overlay" << std::endl;
-                                gameState.messageStack.erase(gameState.messageStack.begin());
-                                if (gameState.messageStack.size() <= 0) {
-                                    messageOverlay->enabled = false;
-                                    if (menuToChange) {
-                                        menuChangedCallback(gameState);
-                                        menuToChange = false;
-                                    }
-                                } else {
-                                    messageText->SetText(gameState, /*&messageOverlay->uiElements.at("Message Action"),*/ gameState.messageStack[0]);
-                                }
+                                HandleMessageOverlayBounce();
                             } else if (!gameState.uiManager.OnMouseLeftDown(gameState, &gameState.inputData.mousePos)) {
                                 switch (gameState.menu) {
                                     case Menu::COMBAT: {
-                                        std::cout << "Combat" << std::endl;
                                         for (const NPCDisplay& npc : combatNPCs) {
-                                            if (SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
-                                                room = &gameState.rooms[gameState.curRoom];
+                                            room = &gameState.rooms[gameState.curRoom];
+                                            if (room->inhabitants[npc.index].curHP > 0 && SDL_PointInRectFloat(&gameState.inputData.mousePos, &npc.area)) {
                                                 if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &room->inhabitants[npc.index])) {
                                                     gameState.player.actions[choice].action(gameState, &gameState.player, &room->inhabitants[npc.index]);
                                                 }
@@ -2205,72 +2135,85 @@ int main(int argc, char** argv) {
                                 }
                             }
                             break;
-                        case SDL_BUTTON_MIDDLE:
+                        }
+                        case SDL_BUTTON_MIDDLE: {
                             if (!gameState.uiManager.OnMouseMiddleDown(gameState, &gameState.inputData.mousePos)) {
-                            
+                                // Currently unused.
                             }
                             break;
-                        case SDL_BUTTON_RIGHT:
+                        }
+                        case SDL_BUTTON_RIGHT: {
                             if (!gameState.uiManager.OnMouseRightDown(gameState, &gameState.inputData.mousePos)) {
-                                
+                                // Currently unused.
                             }
                             break;
+                        }
                     }
                     break;
-                case SDL_EVENT_MOUSE_BUTTON_UP:
+                }
+                case SDL_EVENT_MOUSE_BUTTON_UP: {
                     switch (event.button.button) {
                         case SDL_BUTTON_LEFT:
                             if (!gameState.uiManager.OnMouseLeftUp(gameState, &gameState.inputData.mousePos)) {
-
+                                // Currently unused.
                             }
                             break;
                         case SDL_BUTTON_MIDDLE:
                             if (!gameState.uiManager.OnMouseMiddleUp(gameState, &gameState.inputData.mousePos)) {
-
+                                // Currently unused.
                             }
                             break;
                         case SDL_BUTTON_RIGHT:
                             if (!gameState.uiManager.OnMouseRightUp(gameState, &gameState.inputData.mousePos)) {
-
+                                // Currently unused.
                             }
                             break;
                     }
                     break;
-                case SDL_EVENT_KEY_DOWN:
+                }
+                case SDL_EVENT_KEY_DOWN: {
+                    if (messageOverlay->enabled) {
+                        if (event.key.key == SDLK_ESCAPE) {
+                            HandleMessageOverlayBounce();
+                        }
+                        break;
+                    }
                     switch (gameState.screen) {
                         case Screen::GAME: {
                             switch (gameState.menu) {
                                 case Menu::NONE: {
-                                    if (!messageOverlay->enabled) {
-                                        if (event.key.key == SDLK_I) {
-                                            std::string message = "";
-                                            if (gameState.rooms[gameState.curRoom].roomActions.size() > 0) {
-                                                for (const RoomAction& roomAction : gameState.rooms[gameState.curRoom].roomActions) {
-                                                    if (roomAction.roomDescription != nullptr) {
-                                                        message += roomAction.roomDescription(gameState);
-                                                    }
+                                    if (event.key.key == SDLK_I) {
+                                        std::string message = std::format("{}\n{}\n", GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName, GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomDescription);
+                                        if (gameState.rooms[gameState.curRoom].roomActions.size() > 0) {
+                                            for (const RoomAction& roomAction : gameState.rooms[gameState.curRoom].roomActions) {
+                                                if (roomAction.roomDescription != nullptr) {
+                                                    message += roomAction.roomDescription(gameState);
                                                 }
-                                            } else {
-                                                message = "The room is devoid of interactable objects.";
                                             }
-                                            gameState.AddMessage(message);
+                                        } else {
+                                            message += "The room is devoid of interactable objects.";
                                         }
+                                        gameState.AddMessage(message);
                                     }
                                     break;
                                 }
                                 case Menu::MOVING: {
-                                    if (event.key.key == SDLK_ESCAPE) {
-                                        roomMoveMenu->enabled = false;
-                                        roomGeneralMenu->enabled = true; 
-                                        gameState.menu = Menu::NONE;
-                                    } else if (event.key.key == SDLK_A) {
-                                        if (--choice < 0) {
-                                            choice = gameState.rooms[gameState.curRoom].connections.size() - 1;
-                                        }
-                                    } else if (event.key.key == SDLK_D) {
-                                        if (++choice >= gameState.rooms[gameState.curRoom].connections.size()) {
-                                            choice = 0;
-                                        }
+                                    switch (event.key.key) {
+                                        case SDLK_ESCAPE:
+                                            roomMoveMenu->enabled = false;
+                                            roomGeneralMenu->enabled = true; 
+                                            gameState.menu = Menu::NONE;
+                                            break;
+                                        case SDLK_A:
+                                            if (--choice < 0) {
+                                                choice = gameState.rooms[gameState.curRoom].connections.size() - 1;
+                                            }
+                                            break;
+                                        case SDLK_D:
+                                            if (++choice >= gameState.rooms[gameState.curRoom].connections.size()) {
+                                                choice = 0;
+                                            }
+                                            break;
                                     }
                                     break;
                                 }
@@ -2291,41 +2234,37 @@ int main(int argc, char** argv) {
                                     break;
                                 }
                                 case Menu::COMBAT: {
-                                    if (!messageOverlay->enabled) {
-                                        if (event.key.key == SDLK_S) {
-                                            if (--choice < 0) {
-                                                choice = gameState.player.actions.size() - 1;
-                                            }
-                                        } else if (event.key.key == SDLK_W) {
-                                            if (++choice >= gameState.player.actions.size()) {
-                                                choice = 0;
-                                            }
-                                        } else if (event.key.key == SDLK_SPACE) {
-                                            room = &gameState.rooms[gameState.curRoom];
-                                            if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &gameState.player)) {
-                                                gameState.player.actions[choice].action(gameState, &gameState.player, &gameState.player);
-                                            }
+                                    if (event.key.key == SDLK_S) {
+                                        if (--choice < 0) {
+                                            choice = gameState.player.actions.size() - 1;
+                                        }
+                                    } else if (event.key.key == SDLK_W) {
+                                        if (++choice >= gameState.player.actions.size()) {
+                                            choice = 0;
+                                        }
+                                    } else if (event.key.key == SDLK_SPACE) {
+                                        room = &gameState.rooms[gameState.curRoom];
+                                        if (gameState.player.actions[choice].condition == nullptr || gameState.player.actions[choice].condition(gameState, &gameState.player, &gameState.player)) {
+                                            gameState.player.actions[choice].action(gameState, &gameState.player, &gameState.player);
                                         }
                                     }
                                     break;
                                 }
                                 case Menu::LEVEL_UP: {
-                                    if (!messageOverlay->enabled) {
-                                        if (event.key.key == SDLK_ESCAPE) {
-                                            levelMenu->enabled = false;
-                                            statsMenu->enabled = true;
-                                            gameState.menu = Menu::STATS;
-                                        } else if (event.key.key == SDLK_A) {
-                                            if (--classChoice < 0) {
-                                                classChoice = classNames.size() - 1;
-                                            }
-                                            UpdateLevelUp();
-                                        } else if (event.key.key == SDLK_D) {
-                                            if (++classChoice >= classNames.size()) {
-                                                classChoice = 0;
-                                            }
-                                            UpdateLevelUp();
+                                    if (event.key.key == SDLK_ESCAPE) {
+                                        levelMenu->enabled = false;
+                                        statsMenu->enabled = true;
+                                        gameState.menu = Menu::STATS;
+                                    } else if (event.key.key == SDLK_A) {
+                                        if (--classChoice < 0) {
+                                            classChoice = classNames.size() - 1;
                                         }
+                                        UpdateLevelUp();
+                                    } else if (event.key.key == SDLK_D) {
+                                        if (++classChoice >= classNames.size()) {
+                                            classChoice = 0;
+                                        }
+                                        UpdateLevelUp();
                                     }
                                     break;
                                 }
@@ -2373,32 +2312,29 @@ int main(int argc, char** argv) {
                         }
                     }
                     break;
+                }
             }
         }
 
-        //std::cout << "Prae Process" << std::endl;
         gameState.uiManager.Process(gameState);
-        //std::cout << "Post Process" << std::endl;
+
+        /*
+        for (size_t i = 0; i < 10; ++i) {
+            gameState.assets.particles.at("Smoke")->SpawnParticle(ArsTimoris::Visual::Particle::ParticleData{
+                {200.0f, 200.0f}, 
+                {
+                    PERCENT_DISTRIBUTION(gameState.generator) * 25.0f - 12.5f,
+                    PERCENT_DISTRIBUTION(gameState.generator) * 25.0f - 12.5f
+                },
+                PERCENT_DISTRIBUTION(gameState.generator) * 180.0f - 90.0f,
+                PERCENT_DISTRIBUTION(gameState.generator) * 40.0f - 20.0f,
+                1.0f + PERCENT_DISTRIBUTION(gameState.generator) * 3.0f,
+                2.5f
+            });
+        }
+        */
 
         switch (gameState.screen) {
-            case Screen::TITLE: {
-                break;
-            }
-            case Screen::GAME_SELECT: {
-                /*
-                GameState::DisplayStarts();
-                
-                std::cout << "\nOption: ";
-
-                SafeInput<int32_t>(choice);
-
-                if (--choice < GameState::Starts.size()) {
-                    gameState.screen = Screen::GAME;
-                    gameState.Start(choice);
-                }
-                */
-                break;
-            }
             case Screen::GAME: {
                 switch (gameState.menu) {
                     case Menu::NONE: {
@@ -2433,168 +2369,23 @@ int main(int argc, char** argv) {
                             };
                             float xi = 20.0f;
                             float yi = 30.0f;
-                            std::cout << "Moogle" << std::endl;
                             for (size_t i = 0; i < room->inhabitants.size(); ++i) {
                                 std::shared_ptr<ArsTimoris::Assets::NPCRendererAsset> renderer = gameState.assets.npcRenderers.at(room->inhabitants[i].texture);
-                                //std::println("({}, {}, {}, {}) {}", xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, renderer->width * 2, renderer->height * 2, i);
                                 combatNPCs.push_back(NPCDisplay(gameState,
                                     SDL_FRect{xi + room->inhabitants[i].x, yi + room->inhabitants[i].y, (float)renderer->width * 2, (float)renderer->height * 2}, 
                                     room->inhabitants[i].armor,
                                     renderer, i
                                 ));
-                                //xi += texture->w * 2;
                             }
                             break;
                         }
 
-                        hpText->SetText(gameState, std::format("HP: {:>3}/{:<3}", gameState.player.curHP, gameState.player.maxHP));
-                        mpText->SetText(gameState, std::format("MP: {:>3}/{:<3}", gameState.player.curMana, gameState.player.maxMana));
-                        acText->SetText(gameState, std::format("AC: {}", gameState.player.GetEffectiveArmor()));
-                        xpText->SetText(gameState, std::format("XP: {}", gameState.player.xp));
-                        gpText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
-
-                        /*
-                        if (room->roomActions.size() > 0) {
-                            for (const RoomAction& roomAction : room->roomActions) {
-                                if (roomAction.roomDescription != nullptr) {
-                                    roomAction.roomDescription(gameState);
-                                }
-                            }
-                        }
-                        */
-                        
-                        /*
-                        std::cout << "\nActions:\n1) Move\n2) Actions\n3) Stats\n4) Inventory\n5) Quit\n\nOption: ";
-                        SafeInput<int32_t>(choice);
-                        switch (choice) {
-                            case 1:
-                                gameState.menu = Menu::MOVING;
-                                break;
-                            case 2:
-                                gameState.menu = Menu::ROOM_ACTIONS;
-                                break;
-                            case 3:
-                                gameState.menu = Menu::STATS;
-                                break;
-                            case 4:
-                                gameState.menu = Menu::INVENTORY;
-                                break;
-                            case 5:
-                                gameState.screen = Screen::TITLE;
-                                gameState.menu = Menu::NONE;
-                                break;
-                            case 333: {
-                                if (gameState.debug.enabled) {
-                                    int32_t number = 0;
-                                    std::cout << "\x1b[1mDebug Menu (EDIT)\x1b[22m\n1) Change Gold\n2) Change XP\n3) Back\n\nOption: ";
-                                    SafeInput<int32_t>(choice);
-                                    switch (choice) {
-                                        case 1:
-                                            std::cout << "Gold to add: ";
-                                            SafeInput<int32_t>(number);
-                                            gameState.player.gold += number;
-                                            break;
-                                        case 2:
-                                            std::cout << "XP to add: ";
-                                            SafeInput<int32_t>(number);
-                                            gameState.player.xp += number;
-                                            break;
-                                        case 3:
-                                            break;
-                                    }
-                                }
-                                break;
-                            }
-                            case 444: {
-                                if (gameState.debug.enabled) {
-                                    int32_t number = 0;
-                                    std::cout << "\x1b[1mDebug Menu (INFO)\x1b[22m\n1) View Classes\n2) View Encounters\n3) View Entity Templates\n4) Back\n\nOption: ";
-                                    SafeInput<int32_t>(choice);
-                                    switch (choice) {
-                                        case 1:
-                                            for (std::pair<std::string, ClassData> classPair : GameData::CLASSES) {
-                                                const ClassData& classData = classPair.second;
-                                                std::cout << classData.name << "\n- " << classData.description << "\nLEVELS\n";
-                                                size_t levelIndex = 1;
-                                                for (const ClassLevel& classLevel : classData.levels) {
-                                                    std::cout << levelIndex++ << ". ";
-                                                    classLevel.displayRequirements(gameState, gameState.player);
-                                                    std::cout << "\n";
-                                                }
-                                                std::cout << std::endl;
-                                            }
-                                            break;
-                                        case 2:
-                                            for (const Encounter& encounter : GameData::ENCOUNTERS) {
-                                                std::cout << std::format("Weight:\n{}\n\nEvent:\n{}", encounter.weight, encounter.event) << std::endl;
-                                            }
-                                            break;
-                                        case 3:
-                                            for (const std::pair<std::string, EntityTemplate>& entityTemplate : GameData::ENTITY_TEMPLATES) {
-                                                std::cout << std::format("Name: {}\nHP: {}\nMana: {}\nMana Regeneration: {}\nArmor: {}\n\nSkills:\n", entityTemplate.first, entityTemplate.second.hp, entityTemplate.second.mana, entityTemplate.second.manaRegen, entityTemplate.second.armor);
-                                                for (const std::pair<std::string, int32_t>& skill : entityTemplate.second.skills) {
-                                                    std::cout << std::format("{}: {}\n", skill.first, skill.second);
-                                                }
-                                                std::cout << "\nActions:\n";
-                                                for (const Action& action : entityTemplate.second.actions) {
-                                                    std::cout << std::format("{}\n", action.name);
-                                                }
-                                                std::cout << std::endl;
-                                            }
-                                            break;
-                                        case 4:
-                                            break;
-                                    }
-                                }
-                                break;
-                            }
-                            case 555: {
-                                if (gameState.debug.enabled) {
-                                    int32_t number = 0;
-                                    std::cout << std::format("\x1b[1mDebug Menu (FLAG)\x1b[22m\n1) {}No Fights\x1b[39m\n2) ERR\n3) Back\n\nOption: ", (gameState.debug.noFights ? "\x1b[32m" : "\x1b[31m"));
-                                    SafeInput<int32_t>(choice);
-                                    switch (choice) {
-                                        case 1:
-                                            gameState.debug.noFights = !gameState.debug.noFights;
-                                            break;
-                                        case 2:
-                                            break;
-                                        case 3:
-                                            break;
-                                    }
-                                }
-                                break;
-                            }
-                            case 666: {
-                                gameState.debug.enabled = !gameState.debug.enabled;
-                                break;
-                            }
-                        }
-                        */
+                        UpdateTopBar();
                         break;
                     }
                     case Menu::MOVING: {
                         room = &gameState.rooms[gameState.curRoom];
                         labelText->SetText(gameState, /*&roomMoveMenu->uiElements.at("Label"),*/ std::format("{}/{}) [{}] \\[FCH:{}]{}", choice + 1, room->connections.size(), room->connections[choice].destination, (gameState.rooms[room->connections[choice].destination].initialized ? "FF,00,00" : "00,FF,00"), GameData::ROOM_DATA[gameState.rooms[room->connections[choice].destination].roomID].roomName));
-                        /*
-                        std::cout << "-------------------------------\nRooms:\n";
-                        for (size_t connectionIndex = 0; connectionIndex < room->connections.size();) {
-                            std::cout << ++connectionIndex << ") [" << room->connections[connectionIndex - 1].destination  << "] \x1b[38;5;" << (gameState.rooms[room->connections[connectionIndex - 1].destination].initialized ? "8m" : "15m") << GameData::ROOM_DATA[gameState.rooms[room->connections[connectionIndex - 1].destination].roomID].roomName << "\x1b[39m\n";
-                        }
-                        std::cout << (room->connections.size() + 1) << ") Back\n\nOption: ";
-
-                        SafeInput<int32_t>(choice);
-
-                        if (--choice < room->connections.size()) {
-                            if (room->connections[choice].CanPass(gameState)) {
-                                room->connections[choice].Passes(gameState);
-                                gameState.curRoom = room->connections[choice].destination;
-                            }
-                            gameState.menu = Menu::NONE;
-                        } else if (choice == room->connections.size()) {
-                            gameState.menu = Menu::NONE;
-                        }
-                        */
                         break;
                     }
                     case Menu::ROOM_ACTIONS: {
@@ -2606,117 +2397,9 @@ int main(int argc, char** argv) {
                             roomActionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Label"),*/ "None");
                             roomActionDescriptionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Room Action"),*/ "None");
                         }
-                        /*
-                        std::cout << "-------------------------------\nActions:\n";
-                        for (size_t i = 0; i < room->roomActions.size(); ++i) {
-                            std::cout << (i + 1) << ") " << room->roomActions[i].name << "\n- " << room->roomActions[i].description << "\n";
-                        }
-                        std::cout << (room->roomActions.size() + 1) << ") Back\n\nOption: ";
-
-                        SafeInput<int32_t>(choice);
-
-                        if (--choice < room->roomActions.size()) {
-                            if (room->roomActions[choice].condition(gameState)) {
-                                room->roomActions[choice].usage(gameState);
-                            }
-                            gameState.menu = Menu::NONE;
-                        } else if (choice == room->roomActions.size()) {
-                            gameState.menu = Menu::NONE;
-                        }
-                        */
-                        break;
-                    }
-                    case Menu::STATS: {
-                        /*
-                        std::cout 
-                            << "-------------------------------\n\x1b[1mStats:\x1b[22m\nHP: " 
-                            << gameState.player.curHP << "/" << gameState.player.maxHP 
-                            << "\nMana: " 
-                            << gameState.player.curMana << "/" << gameState.player.maxMana 
-                            << "\nArmor: "
-                            << gameState.player.GetEffectiveArmor()
-                            << " ("
-                            << gameState.player.armor
-                            << " + "
-                            << (gameState.player.GetEffectiveArmor() - gameState.player.armor)
-                            << ")\nXP: "
-                            << gameState.player.xp
-                            << "\nGold: "
-                            << gameState.player.gold
-                            << "\n\n\x1b[1mClasses:\x1b[22m\n";
-
-                        for (const std::pair<std::string, ClassInstance>& classPair : gameState.player.classes) {
-                            std::cout << classPair.first << "(" << classPair.second.level << "/" << GameData::CLASSES.at(classPair.first).levels.size() << "): " << GameData::CLASSES.at(classPair.first).description << "\n";
-                        }
-                            
-                        std::cout << "\n\x1b[1mSkills:\x1b[22m\n";
-                        
-                        for (std::pair<std::string, int32_t> skillPair : gameState.player.skills) {
-                            std::cout << "- " << skillPair.first << ": " << skillPair.second << "\n";
-                        }
-                            
-                        std::cout << "\nOptions:\n1) Level Up\n2) Back\n\nOption: ";
-
-                        SafeInput<int32_t>(choice);
-
-                        switch (choice) {
-                            case 1:
-                                gameState.menu = Menu::LEVEL_UP;
-                                break;
-                            case 2:
-                                gameState.menu = Menu::NONE;
-                                break;
-                        }
-                        */
                         break;
                     }
                     case Menu::LEVEL_UP: {
-                        /*
-                        std::cout 
-                            << "-------------------------------\nXP: " 
-                            << gameState.player.xp
-                            << "\nClasses:\n";
-                        
-                        std::vector<std::string> classics = std::vector<std::string>();
-                        size_t accum = 1;
-                        for (const std::pair<std::string, ClassData>& classPair : GameData::CLASSES) {
-                            classics.push_back(classPair.first);
-                            std::cout << (accum++) << ") " << classPair.first << "(" << (gameState.player.classes.contains(classPair.first) ? (gameState.player.classes.at(classPair.first).level) : 0) << "/" << classPair.second.levels.size() << "): " << classPair.second.description << "\n";
-                            size_t levelToUse = (gameState.player.classes.contains(classPair.second.name) ? (gameState.player.classes.at(classPair.second.name).level + 1) : 1);
-                            //std::cout << "Level: " << levelToUse << " : " << classPair.second.levels.size() << std::endl;
-                            if (classPair.second.levels.size() >= levelToUse && classPair.second.levels[--levelToUse].displayRequirements != nullptr) {
-                                std::cout << "- \x1b[" << ((classPair.second.levels[levelToUse].applicable == nullptr || classPair.second.levels[levelToUse].applicable(gameState, gameState.player)) ? "32m" : "31m");
-                                classPair.second.levels[levelToUse].displayRequirements(gameState, gameState.player);
-                                std::cout << "\x1b[39m\n";
-                            }
-                        }
-                            
-                        std::cout << accum << ") Back\n\nOption: ";
-
-                        SafeInput<int32_t>(choice);
-
-                        if (--choice < GameData::CLASSES.size()) {
-                            const ClassData& classRef = GameData::CLASSES.at(classics[choice]);
-                            size_t levelToUseRedone = (gameState.player.classes.contains(classRef.name) ? (gameState.player.classes.at(classRef.name).level + 1) : 1);
-                            if (classRef.levels.size() < levelToUseRedone) {
-                                std::cout << "Already max level." << std::endl;
-                            } else  {
-                                if (classRef.levels[levelToUseRedone - 1].applicable == nullptr || classRef.levels[levelToUseRedone - 1].applicable(gameState, gameState.player)) {
-                                    for (size_t levelUpEffect = 0; levelUpEffect < classRef.levels[levelToUseRedone - 1].levelUpEffects.size(); ++levelUpEffect) {
-                                        classRef.levels[levelToUseRedone - 1].levelUpEffects[levelUpEffect](gameState, gameState.player, false);
-                                    }
-
-                                    if (gameState.player.classes.contains(classRef.name)) {
-                                        ++gameState.player.classes.at(classRef.name).level;
-                                    } else {
-                                        gameState.player.classes.insert(std::pair<std::string, ClassInstance>(classRef.name, ClassInstance(classRef.name, 1)));
-                                    }
-                                }
-                            }
-                        } else if (choice == GameData::CLASSES.size()) {
-                            gameState.menu = Menu::STATS;
-                        }
-                        */
                         hpText->SetText(gameState, std::format("HP: {:>3}/{:<3}", gameState.player.curHP, gameState.player.maxHP));
                         mpText->SetText(gameState, std::format("MP: {:>3}/{:<3}", gameState.player.curMana, gameState.player.maxMana));
                         acText->SetText(gameState, std::format("AC: {}", gameState.player.GetEffectiveArmor()));
@@ -2730,46 +2413,6 @@ int main(int argc, char** argv) {
                         acText->SetText(gameState, std::format("AC: {}", gameState.player.GetEffectiveArmor()));
                         xpText->SetText(gameState, std::format("XP: {}", gameState.player.xp));
                         gpText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
-
-                        /*
-                        std::cout << "-------------------------------\nInventory:\n";
-                        for (size_t inventoryItem = 0; inventoryItem < gameState.player.items.size();) {
-                            std::cout << ++inventoryItem << ") [" << (gameState.player.equipped[inventoryItem - 1] ? 'X' : ' ') << "] " << GameData::ITEM_DATA[gameState.player.items[inventoryItem - 1].itemID].name << " x" << gameState.player.items[inventoryItem - 1].stackSize << "/" << GameData::ITEM_DATA[gameState.player.items[inventoryItem - 1].itemID].maxStack << "\n -" << GameData::ITEM_DATA[gameState.player.items[inventoryItem - 1].itemID].description << "\n";
-                        }
-                        std::cout << (gameState.player.items.size() + 1) << ") Back\n\nOption: ";
-
-                        SafeInput<int32_t>(choice);
-
-                        if (--choice < gameState.player.items.size()) {
-                            size_t itemIndex = choice;
-                            ItemStack& itemStack = gameState.player.items[itemIndex];
-                            const ItemData& itemType = GameData::ITEM_DATA[itemStack.itemID];
-                            std::cout << "-------------------------------\n" << itemType.name << " x" << itemStack.stackSize << "/" << itemType.maxStack << "\n- " << itemType.description << "\nEquipped [" << (gameState.player.equipped[itemIndex] ? 'X' : ' ') << "]\n";
-                            for (const std::pair<std::string, int32_t>& modPair : itemStack.metadata) {
-                                std::cout << "- " << modPair.first << ": " << modPair.second << "\n";
-                            }
-                            std::cout << "\n1) Use\n2) " << (gameState.player.equipped[itemIndex] ? "Unequip" : "Equip") << "\n3) Back\n\nOption: ";
-                            SafeInput<int32_t>(choice);
-                            switch (choice) {
-                                case 1:
-                                    if (itemType.usage.usage != nullptr) {
-                                        if (itemType.usage.condition == nullptr || itemType.usage.condition(gameState, itemStack, itemIndex)) {
-                                            itemType.usage.usage(gameState, itemStack, itemIndex);
-                                        } else {
-                                            std::cout << "You don't know why you would use this right now." << std::endl;
-                                        }
-                                    } else {
-                                        std::cout << "This item is not usable." << std::endl;
-                                    }
-                                    break;
-                                case 2:
-                                    gameState.player.equipped[itemIndex] = !gameState.player.equipped[itemIndex];
-                                    break;
-                            }
-                        } else if (choice == gameState.player.items.size()) {
-                            gameState.menu = Menu::NONE;
-                        }
-                        */
                         break;
                     }
                     case Menu::COMBAT: {
@@ -2780,9 +2423,9 @@ int main(int argc, char** argv) {
                         }
 
                         if (room->inhabitants.size() > 0) {
-                            topActionText->SetText(gameState, /*&combatMenu->uiElements.at("Top Action"),*/ std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
-                            middleActionText->SetText(gameState, /*&combatMenu->uiElements.at("Middle Action"),*/ std::format("{}", gameState.player.actions[choice].name));
-                            bottomActionText->SetText(gameState, /*&combatMenu->uiElements.at("Bottom Action"),*/ std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
+                            topActionText->SetText(gameState, std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
+                            middleActionText->SetText(gameState, std::format("{}", gameState.player.actions[choice].name));
+                            bottomActionText->SetText(gameState, std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
                         
                             if (gameState.player.usedTurns >= gameState.player.turns) {
                                 gameState.player.usedTurns = 0;
@@ -2796,7 +2439,6 @@ int main(int argc, char** argv) {
                                     } else if (room->inhabitants[npcIndex].aiFunction != nullptr) {
                                         (*room->inhabitants[npcIndex].aiFunction)(gameState, room->inhabitants[npcIndex]);
                                     }
-                                    //EatInput();
                                 }
 
                                 room = &gameState.rooms[gameState.curRoom];
@@ -2854,106 +2496,6 @@ int main(int argc, char** argv) {
                                 a_gameState.menu = Menu::NONE;
                             };
                         }
-                        /*
-                        if (room->inhabitants.size() > 0) {
-                            bool enemiesGo = true;
-                            std::cout << "-------------------------------\nOpponents:\n";
-                            for (size_t npcIndex = 0; npcIndex < room->inhabitants.size(); ++npcIndex) {
-                                std::cout << (npcIndex + 1)  << ") ";
-                                PrintCombatNPCData(gameState, room->inhabitants[npcIndex]);
-                            }
-                            std::cout << "\n\nTurns: " << gameState.player.usedTurns << "/" << gameState.player.turns << "\n-------------------------------\nActions:\n";
-                            for (size_t i = 0; i < gameState.player.actions.size(); ++i) {
-                                std::cout << (i + 1) << ") " << gameState.player.actions[i].name << "\n";
-                            }
-                            std::cout << "\nOption: ";
-
-                            SafeInput<int32_t>(choice);
-
-                            if (--choice < gameState.player.actions.size()) {
-                                size_t action = choice;
-                                std::cout << "-------------------------------\nTargets:\n";
-                                for (size_t npcIndex = 0; npcIndex < room->inhabitants.size(); ++npcIndex) {
-                                    std::cout << (npcIndex + 1)  << ") ";
-                                    PrintCombatNPCData(gameState, room->inhabitants[npcIndex]);
-                                }
-                                std::cout << (room->inhabitants.size() + 1)  << ") Yourself\n- HP [" << gameState.player.curHP << "/" << gameState.player.maxHP << "]\n- Mana [" << gameState.player.curMana << "/" << gameState.player.maxMana << "]\n"<< (room->inhabitants.size() + 2)  << ") Back\n\nOption: ";
-                                SafeInput<int32_t>(choice);
-                                if (--choice < room->inhabitants.size()) {
-                                    std::cout << "-------------------------------\n";
-                                    if (gameState.player.actions[action].condition == nullptr || gameState.player.actions[action].condition(gameState, &gameState.player, &room->inhabitants[choice])) {
-                                        gameState.player.actions[action].action(gameState, &gameState.player, &room->inhabitants[choice]);
-                                    }
-                                } else if (choice == room->inhabitants.size()) {
-                                    std::cout << "-------------------------------\n";
-                                    if (gameState.player.actions[action].condition == nullptr || gameState.player.actions[action].condition(gameState, &gameState.player, &gameState.player)) {
-                                        gameState.player.actions[action].action(gameState, &gameState.player, &gameState.player);
-                                    }
-                                } else {
-                                    enemiesGo = false;
-                                    if (choice != room->inhabitants.size() + 1) {
-                                        std::cout << "Invalid choice." << std::endl;
-                                    }
-                                }
-
-                                if (gameState.player.usedTurns >= gameState.player.turns && ) {
-                                    enemiesGo = false;
-                                }
-
-                                if (room->LivingInhabitants() <= 0) {
-                                    enemiesGo = true;
-                                }
-
-                                if (enemiesGo) {
-                                    gameState.player.usedTurns = 0;
-
-                                    for (size_t npcIndex = 0; npcIndex < room->inhabitants.size(); ++npcIndex) {
-                                        if (room->inhabitants[npcIndex].stunned) {
-                                            room->inhabitants[npcIndex].stunned = false;
-                                            std::cout << "The " << room->inhabitants[npcIndex].name << " is stunned." << std::endl;
-                                        } else if (room->inhabitants[npcIndex].curHP <= 0) {
-                                            std::cout << "The " << room->inhabitants[npcIndex].name << " is dead." << std::endl;
-                                        } else if (room->inhabitants[npcIndex].aiFunction != nullptr) {
-                                            (*room->inhabitants[npcIndex].aiFunction)(gameState, room->inhabitants[npcIndex]);
-                                        }
-                                        EatInput();
-                                    }
-
-                                    room = &gameState.rooms[gameState.curRoom];
-
-                                    std::vector<size_t> remove = std::vector<size_t>();
-
-                                    for (int32_t j = room->inhabitants.size() - 1; j > -1; --j) {
-                                        if (room->inhabitants[j].curHP <= 0) {
-                                            gameState.player.xp += room->inhabitants[j].xp;
-                                            gameState.player.gold += room->inhabitants[j].gold;
-                                            for (size_t k = 0; k < room->inhabitants[j].onDeath.size(); ++k) {
-                                                gameState.rooms[gameState.curRoom].inhabitants[j].onDeath[k](gameState, gameState.rooms[gameState.curRoom].inhabitants[j]);
-                                            }
-                                            remove.push_back(j);
-                                        } else {
-                                            room->inhabitants[j].TurnEnd(gameState);
-                                        }
-                                    }
-
-                                    for (const size_t& toRemove : remove) {
-                                        room->inhabitants.erase(room->inhabitants.begin() + toRemove);
-                                        room = &gameState.rooms[gameState.curRoom];
-                                    }
-
-                                    if (gameState.player.curHP <= 0) {
-                                        std::cout << "\nYou collapse to the floor, dead." << std::endl;
-                                        gameState.screen = Screen::GAME_OVER;
-                                        gameState.menu = Menu::NONE;
-                                    } else {
-                                        gameState.player.TurnEnd(gameState);
-                                    }
-                                }
-                            }
-                        } else {
-                            gameState.menu = Menu::NONE;
-                        }
-                            */
                         break;
                     }
                     case Menu::SHOP: {
@@ -3051,62 +2593,57 @@ int main(int argc, char** argv) {
         SDL_RenderClear(gameState.renderer);
 
         switch (gameState.screen) {
-            case Screen::TITLE: {
-                break;
-            }
             case Screen::GAME: {
                 switch (gameState.menu) {
                     case Menu::NONE: {
-                        SDL_FRect thingy = {0, 140, 1200, 600};
-                        //std::println("{}: {}", GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->name);
-                        SDL_RenderTexture(gameState.renderer, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->texture, NULL, &thingy);
+                        const SDL_FRect ROOM_BACKGROUND_RECT = {0, 140, 1200, 600};
+                        SDL_RenderTexture(gameState.renderer, gameState.assets.textures.at(GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName)->texture, NULL, &ROOM_BACKGROUND_RECT);
                         break;
                     }
                     case Menu::COMBAT: {
-                        SDL_FRect barBack = {0, 598, 24, 104};
-                        SDL_FRect barHPBack = {26, 598, 24, 104};
-                        SDL_FRect barMPBack = {52, 598, 24, 104};
+                        const SDL_FRect TURN_BAR_BACK = {0, 598, 24, 104};
+                        const SDL_FRect HP_BAR_BACK = {26, 598, 24, 104};
+                        const SDL_FRect MP_BAR_BACK = {52, 598, 24, 104};
+
                         SDL_SetRenderDrawColor(gameState.renderer, 20, 20, 20, SDL_ALPHA_OPAQUE);
-                        SDL_RenderFillRect(gameState.renderer, &barBack);
-                        SDL_RenderFillRect(gameState.renderer, &barHPBack);
-                        SDL_RenderFillRect(gameState.renderer, &barMPBack);
-                        SDL_FRect fillBack = {2, 600, 20, (102.0f - (2.0f * gameState.player.turns)) / gameState.player.turns};
+                        SDL_RenderFillRect(gameState.renderer, &TURN_BAR_BACK);
+                        SDL_RenderFillRect(gameState.renderer, &HP_BAR_BACK);
+                        SDL_RenderFillRect(gameState.renderer, &MP_BAR_BACK);
+
+                        SDL_FRect turnBarNotch = {2, 600, 20, (102.0f - (2.0f * gameState.player.turns)) / gameState.player.turns};
                         SDL_SetRenderDrawColor(gameState.renderer, 55, 55, 55, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.usedTurns; ++i) {
-                            //std::println("USED {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
-                            SDL_RenderFillRect(gameState.renderer, &fillBack);
-                            fillBack.y += fillBack.h + 2;
+                            SDL_RenderFillRect(gameState.renderer, &turnBarNotch);
+                            turnBarNotch.y += turnBarNotch.h + 2;
                         }
                         SDL_SetRenderDrawColor(gameState.renderer, 75, 155, 75, SDL_ALPHA_OPAQUE);
                         for (size_t i = 0; i < gameState.player.turns - gameState.player.usedTurns; ++i) {
-                            //std::println("FREE {}) ({}, {}, {}, {})", i, fillBack.x, fillBack.y, fillBack.w, fillBack.h);
-                            SDL_RenderFillRect(gameState.renderer, &fillBack);
-                            fillBack.y += fillBack.h + 2;
+                            SDL_RenderFillRect(gameState.renderer, &turnBarNotch);
+                            turnBarNotch.y += turnBarNotch.h + 2;
                         }
+
                         SDL_SetRenderDrawColor(gameState.renderer, 205, 75, 75, SDL_ALPHA_OPAQUE);
                         float hpPerc = (float)gameState.player.curHP / (float)gameState.player.maxHP;
                         SDL_FRect fillHP = {28, 700.0f - 100.0f * hpPerc, 20, 100.0f * hpPerc};
                         SDL_RenderFillRect(gameState.renderer, &fillHP);
+                        
                         SDL_SetRenderDrawColor(gameState.renderer, 75, 75, 205, SDL_ALPHA_OPAQUE);
                         float mpPerc = (float)gameState.player.curMana / (float)gameState.player.maxMana;
                         SDL_FRect fillMP = {54, 700.0f - 100.0f * mpPerc, 20, 100.0f * mpPerc};
                         SDL_RenderFillRect(gameState.renderer, &fillMP);
 
-                        //std::println("Combat NPCS: {}", combatNPCs.size());
                         for (int32_t i = combatNPCs.size() - 1; i >= 0; --i) {
-                            SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
-                            //std::println("({}, {}, {}, {}) {}", combatNPCs[i].area.x, combatNPCs[i].area.y, combatNPCs[i].area.w, combatNPCs[i].area.h, i);
-                            //SDL_RenderFillRect(gameState.renderer, &combatNPCs[i].area);
                             combatNPCs[i].renderer->Render(gameState.renderer, combatNPCs[i].area, totalTime);
-                            //SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
 
-                            
+                            if (gameState.debug.drawHitboxes) {
+                                SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
+                                SDL_RenderFillRect(gameState.renderer, &combatNPCs[i].area);
+                            }
 
                             if (
                                 room->inhabitants[combatNPCs[i].index].GetSkillModifier("Unknowability") < 1 &&
                                 gameState.player.perks.test(static_cast<size_t>(Perks::INSIGHT))
                             ) {
-                                //std::cout << "- Armor [" << room->inhabitants[combatNPCs[i].index].armor << "]\n";
                                 SDL_RenderTexture(gameState.renderer, combatNPCs[i].armorTexture, NULL, &combatNPCs[i].armorArea);
                             }
 
@@ -3118,11 +2655,11 @@ int main(int argc, char** argv) {
                                 )
                             ) {
                                 SDL_SetRenderDrawColor(gameState.renderer, 25, 25, 25, 175);
-                                SDL_FRect npcBack = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 19, (combatNPCs[i].area.w - 6), 8};
-                                SDL_RenderFillRect(gameState.renderer, &npcBack);
+                                SDL_FRect npcHPBarBack = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 19, (combatNPCs[i].area.w - 6), 8};
+                                SDL_RenderFillRect(gameState.renderer, &npcHPBarBack);
                                 SDL_SetRenderDrawColor(gameState.renderer, 205, 25, 25, 157);
-                                SDL_FRect npcFill = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 19, (combatNPCs[i].area.w - 6) * ((float)room->inhabitants[combatNPCs[i].index].curHP / (float)room->inhabitants[combatNPCs[i].index].maxHP), 8};
-                                SDL_RenderFillRect(gameState.renderer, &npcFill);
+                                SDL_FRect npcHPBarFill = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 19, (combatNPCs[i].area.w - 6) * ((float)room->inhabitants[combatNPCs[i].index].curHP / (float)room->inhabitants[combatNPCs[i].index].maxHP), 8};
+                                SDL_RenderFillRect(gameState.renderer, &npcHPBarFill);
                             }
 
                             if (
@@ -3133,18 +2670,13 @@ int main(int argc, char** argv) {
                                 )
                             ) {
                                 SDL_SetRenderDrawColor(gameState.renderer, 25, 25, 25, 175);
-                                SDL_FRect npcBack = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 11, (combatNPCs[i].area.w - 6), 8};
-                                SDL_RenderFillRect(gameState.renderer, &npcBack);
+                                SDL_FRect npcMPBarBack = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 11, (combatNPCs[i].area.w - 6), 8};
+                                SDL_RenderFillRect(gameState.renderer, &npcMPBarBack);
                                 SDL_SetRenderDrawColor(gameState.renderer, 25, 25, 205, 157);
-                                SDL_FRect npcFill = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 11, (combatNPCs[i].area.w - 6) * ((float)room->inhabitants[combatNPCs[i].index].curMana / (float)room->inhabitants[combatNPCs[i].index].maxMana), 8};
-                                SDL_RenderFillRect(gameState.renderer, &npcFill);
+                                SDL_FRect npcMPBarFill = {combatNPCs[i].area.x + 3, combatNPCs[i].area.y + combatNPCs[i].area.h - 11, (combatNPCs[i].area.w - 6) * ((float)room->inhabitants[combatNPCs[i].index].curMana / (float)room->inhabitants[combatNPCs[i].index].maxMana), 8};
+                                SDL_RenderFillRect(gameState.renderer, &npcMPBarFill);
                             }
                         }
-
-                        //SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
-                        //for (size_t i = combatNPCs.size() - 1; i >= 0; --i) {
-                        //    SDL_RenderTexture(gameState.renderer, combatNPCs[i].texture->texture, NULL, &combatNPCs[i].area);
-                        //}
                         break;
                     }
                 }
@@ -3152,11 +2684,14 @@ int main(int argc, char** argv) {
             }
         }
 
+        for (std::pair<const std::string, std::shared_ptr<ArsTimoris::Assets::ParticleAsset>>& particlePair : gameState.assets.particles) {
+            particlePair.second->Render(gameState.renderer, deltaTimeSeconds);
+        }
+
         gameState.uiManager.Render(gameState);
 
         SDL_RenderPresent(gameState.renderer);
         SDL_Delay(8);
-        //std::cout << "Very end" << std::endl;
     }
 
     //for (int i = 0; i < 100; ++i) {

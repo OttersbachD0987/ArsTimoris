@@ -4,37 +4,10 @@
 #include <ArsTimoris/Assets/Asset.h>
 #include <vector>
 #include <cstdint>
-#include <functional>
 #include <memory>
-#include <ArsTimoris/Assets/TextureAsset.h>
+#include <ArsTimoris/Visual/NPC/NPCRenderStep.h>
 
 namespace ArsTimoris {
-    struct RenderPassData {
-    public:
-        SDL_FRect src;
-        SDL_FRect rect;
-        uint8_t alpha;
-    };
-
-    struct NPCRenderStep {
-    public:
-        std::vector<std::function<void(RenderPassData*, float)>> modifiers = std::vector<std::function<void(RenderPassData*, float)>>();
-
-        virtual void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time) = 0;
-        virtual ~NPCRenderStep() {};
-    };
-
-    struct NPCImageStep : public NPCRenderStep {
-    public:
-        std::shared_ptr<Assets::TextureAsset> image;
-        uint8_t alpha;
-        SDL_BlendMode blendmode;
-
-        NPCImageStep(std::shared_ptr<Assets::TextureAsset> a_image, uint8_t a_alpha, SDL_BlendMode a_blendmode);
-        void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time);
-        ~NPCImageStep();
-    };
-
     namespace Assets {
         class Assets;
 
@@ -47,7 +20,7 @@ namespace ArsTimoris {
             NPCRendererAsset(std::string a_id, std::string a_name);
 
             /// @brief 
-            std::vector<std::unique_ptr<NPCRenderStep>> renderSteps;
+            std::vector<std::unique_ptr<Visual::NPC::NPCRenderStep>> renderSteps;
 
             int32_t width;
             int32_t height;

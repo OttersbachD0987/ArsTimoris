@@ -3,34 +3,10 @@
 #include <fstream>
 #include <print>
 #include <ArsTimoris/Util/Input.hpp>
+#include <ArsTimoris/Visual/NPC/NPCImageStep.h>
+#include <ArsTimoris/Visual/RenderPassData.h>
 
 namespace ArsTimoris {
-    NPCImageStep::NPCImageStep(std::shared_ptr<Assets::TextureAsset> a_image, uint8_t a_alpha, SDL_BlendMode a_blendmode) {
-        this->image = a_image;
-        this->alpha = a_alpha;
-        this->blendmode = a_blendmode;
-    }
-
-    void NPCImageStep::Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time) {
-        uint8_t oldAlpha;
-        SDL_BlendMode oldBlendmode;
-        SDL_GetTextureAlphaMod(image->texture, &oldAlpha);
-        SDL_GetTextureBlendMode(image->texture, &oldBlendmode);
-        RenderPassData renderPassData = {{0, 0, image->w, image->h}, a_rect, alpha};
-        for (std::function<void(RenderPassData*, float)> func : modifiers) {
-            func(&renderPassData, a_time);
-        }
-        SDL_SetTextureAlphaMod(image->texture, renderPassData.alpha);
-        SDL_SetTextureBlendMode(image->texture, blendmode);
-        SDL_RenderTexture(a_renderer, image->texture, &renderPassData.src, &renderPassData.rect);
-        SDL_SetTextureAlphaMod(image->texture, oldAlpha);
-        SDL_SetTextureBlendMode(image->texture, oldBlendmode);
-    }
-
-    NPCImageStep::~NPCImageStep() {
-        image.reset();
-    }
-
     namespace Assets {
         enum class ModeOne {
             STEP_START,
@@ -49,7 +25,7 @@ namespace ArsTimoris {
         }
         
         void NPCRendererAsset::Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time) {
-            for (std::unique_ptr<NPCRenderStep>& renderStep : renderSteps) {
+            for (std::unique_ptr<Visual::NPC::NPCRenderStep>& renderStep : renderSteps) {
                 renderStep->Render(a_renderer, a_rect, a_time);
             }
         }
@@ -60,7 +36,7 @@ namespace ArsTimoris {
             std::string renderType = "";
             std::string modifierType = "";
             std::ifstream file = std::ifstream(a_path);
-            std::unique_ptr<NPCRenderStep> renderStep = nullptr;
+            std::unique_ptr<Visual::NPC::NPCRenderStep> renderStep = nullptr;
             ModeOne currentModeOne = ModeOne::STEP_START;
             //std::println("Reading: {}", a_path);
             //std::cout << "Press any key to continue..." << std::flush;
@@ -144,7 +120,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     std::string readTexture = registers.back();
                                     registers.pop_back();
-                                    renderStep = std::make_unique<NPCImageStep>(a_assets->textures.at(readTexture), readAlpha, readBlendmode);
+                                    renderStep = std::make_unique<Visual::NPC::NPCImageStep>(a_assets->textures.at(readTexture), readAlpha, readBlendmode);
                                 }
                                 renderType = "";
                                 currentModeOne = ModeOne::STEP_DONE;
@@ -196,7 +172,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.x += readAmplitude * sinf(a_time * readFrequency * 3.14f);
                                     });
                                 } else if (modifierType == "sway_sin_y") {
@@ -204,7 +180,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.y += readAmplitude * sinf(a_time * readFrequency * 3.14f);
                                     });
                                 } else if (modifierType == "sway_cos_x") {
@@ -212,7 +188,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.x += readAmplitude * cosf(a_time * readFrequency * 3.14f);
                                     });
                                 } else if (modifierType == "sway_cos_y") {
@@ -220,19 +196,19 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.y += readAmplitude * cosf(a_time * readFrequency * 3.14f);
                                     });
                                 } else if (modifierType == "offset_x") {
                                     float readOffset = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readOffset](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readOffset](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.x += readOffset;
                                     });
                                 } else if (modifierType == "offset_y") {
                                     float readOffset = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readOffset](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readOffset](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->rect.y += readOffset;
                                     });
                                 } else if (modifierType == "sway_sin_a") {
@@ -240,7 +216,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->alpha += (int8_t)roundf(readAmplitude * sinf(a_time * readFrequency * 3.14f));
                                     });
                                 } else if (modifierType == "sway_cos_a") {
@@ -248,7 +224,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     float readFrequency = std::stof(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readAmplitude, readFrequency](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->alpha += (int8_t)roundf(readAmplitude * cosf(a_time * readFrequency * 3.14f));
                                     });
                                 } else if (modifierType == "animate_x") {
@@ -258,7 +234,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     int32_t readFrameSize = std::stoi(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readSeconds, readFrames, readFrameSize](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readSeconds, readFrames, readFrameSize](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         a_renderPassData->src.x += readFrameSize * ((int32_t)floorf(a_time / readSeconds) % readFrames);
                                         a_renderPassData->src.w = (float)readFrameSize;
                                     });
@@ -269,7 +245,7 @@ namespace ArsTimoris {
                                     registers.pop_back();
                                     int32_t readFrameSize = std::stoi(registers.back());
                                     registers.pop_back();
-                                    renderStep->modifiers.emplace_back([readSeconds, readFrames, readFrameSize](RenderPassData* a_renderPassData, float a_time) {
+                                    renderStep->modifiers.emplace_back([readSeconds, readFrames, readFrameSize](Visual::RenderPassData* a_renderPassData, float a_time) {
                                         std::println("Prae: ({}, {}, {}, {})", a_renderPassData->src.x, a_renderPassData->src.y, a_renderPassData->src.w, a_renderPassData->src.h);
                                         a_renderPassData->src.y += readFrameSize * ((int32_t)floorf(a_time / readSeconds) % readFrames);
                                         a_renderPassData->src.h = (float)readFrameSize;

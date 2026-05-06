@@ -115,10 +115,12 @@ size_t ParseFunctionArguments(const std::string& a_string, std::vector<std::stri
                     if (escaped) {
                         stringHolder += character;
                     } else {
+                        stringHolder += character;
                         inString = false;
                     }
                     escaped = false;
                 } else {
+                    stringHolder += character;
                     inString = true;
                 }
                 break;
@@ -185,6 +187,54 @@ size_t ParseFunctionArguments(const std::string& a_string, std::vector<std::stri
         a_vector.push_back(stringHolder);
     }
     return a_vector.size();
+}
+
+void SanitizeArgument(std::string& a_string) {
+    size_t startOff = 0;
+    size_t endOff = a_string.size();
+    bool startDone = false;
+    bool escaped = false;
+    for (size_t i = 0; i < a_string.size(); ++i) {
+        switch (a_string[i]) {
+            case '"':
+                if (escaped) {
+                    if (startDone) {
+                        endOff = i;
+                    } else {
+                        startOff = i;
+                        startDone = true;
+                    }
+                }
+            case ' ':
+            case '\n':
+            case '\t':
+            case '\v':
+                escaped = false;
+                break;
+            case '\\':
+                if (startDone) {
+                    endOff = i;
+                } else {
+                    startOff = i;
+                    startDone = true;
+                }
+                escaped = !escaped;
+                break;
+            default:
+                if (startDone) {
+                    endOff = i;
+                } else {
+                    startOff = i;
+                    startDone = true;
+                }
+                escaped = false;
+                break;
+        }
+    }
+    #ifdef STRING_UTILS_DEBUG_LOGGING
+    //std::cout << std::format("<{}>:<{}>:<{}>", a_string.substr(0, startOff + 1), a_string.substr(startOff, endOff - startOff + 1), a_string.substr(endOff, a_string.size() - endOff + 1)) << std::endl;
+    #endif
+    a_string = a_string.substr(startOff, endOff - startOff + 1);
 }
 
 void SanitizeString(std::string& a_string) {

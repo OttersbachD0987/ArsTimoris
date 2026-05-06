@@ -45,7 +45,7 @@ int32_t Interpreter::ParseIntExpression(GameState& a_gameState, InterpreterConte
                     case '{':
                     case '}':
                         justOperated = false;
-                        DebugLogging::ParsingOut << "[ERROR] Invalid characters." << std::endl;
+                        DebugLogging::ParsingOut << std::format("[ERROR] Invalid character '{}'.", character) << std::endl;
                         break;
                     case '.':
                         justOperated = false;
@@ -56,8 +56,13 @@ int32_t Interpreter::ParseIntExpression(GameState& a_gameState, InterpreterConte
                         justOperated = true;
                         break;
                     case '-':
-                        context.operatorEvaluation = OperatorEvaluation::SUBT;
-                        justOperated = true;
+                        if (context.stringRegisters[context.stringRegister] != "") {
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else {
+                            context.stringRegisters[context.stringRegister] += character;
+                            justOperated = false;
+                        }
                         break;
                     case '*':
                         context.operatorEvaluation = OperatorEvaluation::MULT;
@@ -257,7 +262,7 @@ int32_t Interpreter::ParseIntExpression(GameState& a_gameState, InterpreterConte
             toReturn = context.intRegisters[context.intRegister];
             break;
         case RegisterType::FLOAT:
-            toReturn = context.floatRegisters[context.floatRegister];
+            toReturn = (int32_t)context.floatRegisters[context.floatRegister];
             break;
         case RegisterType::BOOL:
         case RegisterType::STRING:
@@ -310,7 +315,7 @@ float Interpreter::ParseFloatExpression(GameState& a_gameState, InterpreterConte
                     case '{':
                     case '}':
                         justOperated = false;
-                        DebugLogging::ParsingOut << "[ERROR] Invalid characters." << std::endl;
+                        DebugLogging::ParsingOut << std::format("[ERROR] Invalid character '{}'.", character) << std::endl;
                         break;
                     case '.':
                         justOperated = false;
@@ -321,8 +326,13 @@ float Interpreter::ParseFloatExpression(GameState& a_gameState, InterpreterConte
                         justOperated = true;
                         break;
                     case '-':
-                        context.operatorEvaluation = OperatorEvaluation::SUBT;
-                        justOperated = true;
+                        if (context.stringRegisters[context.stringRegister] != "") {
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else {
+                            context.stringRegisters[context.stringRegister] += character;
+                            justOperated = false;
+                        }
                         break;
                     case '*':
                         context.operatorEvaluation = OperatorEvaluation::MULT;
@@ -520,10 +530,10 @@ float Interpreter::ParseFloatExpression(GameState& a_gameState, InterpreterConte
     float toReturn;
     switch (context.lastRegister) {
         case RegisterType::INT:
-            toReturn = context.intRegisters[context.intRegister];
+            toReturn = (float)context.intRegisters[context.intRegister];
             break;
         case RegisterType::FLOAT:
-            toReturn = (int32_t)context.floatRegisters[context.floatRegister];
+            toReturn = context.floatRegisters[context.floatRegister];
             break;
         case RegisterType::BOOL:
         case RegisterType::STRING:
@@ -576,7 +586,7 @@ int32_t Interpreter::ParseBoolExpression(GameState& a_gameState, InterpreterCont
                     case '{':
                     case '}':
                         justOperated = false;
-                        DebugLogging::ParsingOut << "[ERROR] Invalid characters." << std::endl;
+                        DebugLogging::ParsingOut << std::format("[ERROR] Invalid character '{}'.", character) << std::endl;
                         break;
                     case '.':
                         justOperated = false;
@@ -587,8 +597,13 @@ int32_t Interpreter::ParseBoolExpression(GameState& a_gameState, InterpreterCont
                         justOperated = true;
                         break;
                     case '-':
-                        context.operatorEvaluation = OperatorEvaluation::SUBT;
-                        justOperated = true;
+                        if (context.stringRegisters[context.stringRegister] != "") {
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else {
+                            context.stringRegisters[context.stringRegister] += character;
+                            justOperated = false;
+                        }
                         break;
                     case '*':
                         context.operatorEvaluation = OperatorEvaluation::MULT;
@@ -862,7 +877,7 @@ std::string Interpreter::FormatString(GameState& a_gameState, InterpreterContext
                                 inString = false;
                             }
                         } else {
-                            DebugLogging::ParsingOut << "[ERROR] Invalid characters." << std::endl;
+                            DebugLogging::ParsingOut << std::format("[ERROR] Invalid character '{}'.", character) << std::endl;
                         }
                         break;
                     case '}':
@@ -871,7 +886,7 @@ std::string Interpreter::FormatString(GameState& a_gameState, InterpreterContext
                                 result += character;
                                 escaped = false;
                             } else {
-                                DebugLogging::ParsingOut << "[ERROR] Invalid characters." << std::endl;
+                                DebugLogging::ParsingOut << std::format("[ERROR] Invalid character '{}'.", character) << std::endl;
                             }
                         } else {
                             inString = true;
@@ -910,7 +925,11 @@ std::string Interpreter::FormatString(GameState& a_gameState, InterpreterContext
                         if (inString) {
                             result += character;
                         } else {
-                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            if (context.stringRegisters[context.stringRegister] != "") {
+                                context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            } else {
+                                context.stringRegisters[context.stringRegister] += character;
+                            }
                         }
                         break;
                     case '*':
@@ -1106,12 +1125,21 @@ std::string Interpreter::FormatString(GameState& a_gameState, InterpreterContext
 void Interpreter::ParseRawType(GameState& a_gameState, InterpreterContext& a_context) {
     if (IsStringInt(a_context.stringRegisters[a_context.stringRegister])) {
         a_context.SetIntRegister(std::stoi(a_context.stringRegisters[a_context.stringRegister]));
+        //#ifdef SCRIPT_PARSER_DEBUG_LOGGING
+        //DebugLogging::ParsingOut << std::format("[DEBUG] Parsing '{}' as INT gives {}", a_context.stringRegisters[a_context.stringRegister], a_context.intRegisters[a_context.intRegister]) << std::endl;
+        //#endif
         a_context.stringRegisters[a_context.stringRegister] = "";
     } else if (IsStringFloat(a_context.stringRegisters[a_context.stringRegister])) {
         a_context.SetFloatRegister(std::stof(a_context.stringRegisters[a_context.stringRegister]));
+        //#ifdef SCRIPT_PARSER_DEBUG_LOGGING
+        //DebugLogging::ParsingOut << std::format("[DEBUG] Parsing '{}' as FLT gives {}", a_context.stringRegisters[a_context.stringRegister], a_context.floatRegisters[a_context.floatRegister]) << std::endl;
+        //#endif
         a_context.stringRegisters[a_context.stringRegister] = "";
     } else if (IsStringBool(a_context.stringRegisters[a_context.stringRegister])) {
         a_context.SetBoolRegister(a_context.stringRegisters[a_context.stringRegister] == "true");
+        //#ifdef SCRIPT_PARSER_DEBUG_LOGGING
+        //DebugLogging::ParsingOut << std::format("[DEBUG] Parsing '{}' as BOL gives {}", a_context.stringRegisters[a_context.stringRegister], a_context.boolRegisters[a_context.boolRegister] ? "true" : "false") << std::endl;
+        //#endif
         a_context.stringRegisters[a_context.stringRegister] = "";
     }
 }
@@ -1334,6 +1362,9 @@ void Interpreter::ParseObjectMethod(GameState& a_gameState, InterpreterContext& 
         } else if (a_context.stringRegisters[a_context.stringRegister] == "EatInput") {
             a_context.stringRegister += 1;
             a_context.mode.push_back(ReaderMode::ARGS);
+        } else if (a_context.stringRegisters[a_context.stringRegister] == "SpawnParticle") {
+            a_context.stringRegister += 1;
+            a_context.mode.push_back(ReaderMode::ARGS);
         }
     } else if (object == "room") {
         if (a_context.stringRegisters[a_context.stringRegister] == "AddInhabitant") {
@@ -1365,7 +1396,7 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
         #ifdef SCRIPT_PARSER_DEBUG_LOGGING
         DebugLogging::ParsingOut << std::format("Prae Sanitize: \"{}\"", args[i]) << std::endl;
         #endif
-        SanitizeString(args[i]);
+        SanitizeArgument(args[i]);
         #ifdef SCRIPT_PARSER_DEBUG_LOGGING
         DebugLogging::ParsingOut << std::format("Post Sanitize: \"{}\"", args[i]) << std::endl;
         #endif
@@ -1616,7 +1647,29 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
             if (argc == 0) {
                 EatInput();
             } else {
-                DebugLogging::ParsingOut << "[ERROR]: console.Print must have 0 arguments, this call has " << argc << "." << std::endl;
+                DebugLogging::ParsingOut << "[ERROR]: console.EatInput must have 0 arguments, this call has " << argc << "." << std::endl;
+            }
+        } else if (method == "SpawnParticle") {
+            if (argc == 9) {
+                std::string pType = FormatString(a_gameState, a_context, args[0]);
+                float pX = ParseFloatExpression(a_gameState, a_context, args[1]);
+                float pY = ParseFloatExpression(a_gameState, a_context, args[2]);
+                float pVX = ParseFloatExpression(a_gameState, a_context, args[3]);
+                float pVY = ParseFloatExpression(a_gameState, a_context, args[4]);
+                float pA = ParseFloatExpression(a_gameState, a_context, args[5]);
+                float pAV = ParseFloatExpression(a_gameState, a_context, args[6]);
+                float pS = ParseFloatExpression(a_gameState, a_context, args[7]);
+                float pT = ParseFloatExpression(a_gameState, a_context, args[8]);
+                #ifdef SCRIPT_PARSER_DEBUG_LOGGING
+                DebugLogging::ParsingOut << std::format("[DEBUG]: Spawning {} at ({}, {}) with ({}, {}) at {} rotating {} scaled {} for {}", pType, pX, pY, pVX, pVY, pA, pAV, pS, pT) << std::endl;
+                #endif
+                a_gameState.assets.particles.at(pType)->SpawnParticle(ArsTimoris::Visual::Particle::ParticleData{
+                    {pX, pY},
+                    {pVX, pVY},
+                    pA, pAV, pS, pT
+                });
+            } else {
+                DebugLogging::ParsingOut << "[ERROR]: console.SpawnParticle must have 9 arguments, this call has " << argc << "." << std::endl;
             }
         }
 

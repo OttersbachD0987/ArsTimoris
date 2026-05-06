@@ -10,6 +10,7 @@
 #include <ArsTimoris/Assets/LazyFontAsset.h>
 #include <ArsTimoris/Assets/FontAtlasAsset.h>
 #include <ArsTimoris/Assets/NPCRendererAsset.h>
+#include <ArsTimoris/Assets/ParticleAsset.h>
 
 namespace ArsTimoris {
     namespace UI {
@@ -35,6 +36,8 @@ namespace ArsTimoris {
             std::unordered_map<std::string, std::shared_ptr<TextureAsset>> textures;
             /// @brief 
             std::unordered_map<std::string, std::shared_ptr<NPCRendererAsset>> npcRenderers;
+            /// @brief 
+            std::unordered_map<std::string, std::shared_ptr<ParticleAsset>> particles;
             /// @brief 
             ArsTimoris::UI::UIManager* uiManager;
 
@@ -66,6 +69,10 @@ namespace ArsTimoris {
             /// @param a_path 
             /// @param a_name 
             void AddNPCRenderer(std::string a_path, std::string a_name);
+            /// @brief 
+            /// @param a_path 
+            /// @param a_name 
+            void AddParticle(std::string a_path, std::string a_name);
             /// @brief 
             void Uninitialize(void);
         };

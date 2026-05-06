@@ -55,6 +55,8 @@ enum struct RegisterType {
     BOOL,
 };
 
+std::string RegisterTypeDisplayName(RegisterType a_registerType);
+
 struct InterpreterContext {
 public:
     std::vector<std::string> stringRegisters = {"", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""};

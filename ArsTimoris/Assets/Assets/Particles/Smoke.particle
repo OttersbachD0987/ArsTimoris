@@ -1,0 +1,7 @@
+meta:
+    texture: WhitePixel;
+    tint: 255, 0, 0;
+    alpha: 255;
+    blend: blend;
+    center: 0.5, 0.5;
+;

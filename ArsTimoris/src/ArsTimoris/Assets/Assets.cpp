@@ -8,6 +8,8 @@ namespace ArsTimoris::Assets {
         fonts = std::unordered_map<std::string, std::shared_ptr<FontAsset>>();
         lazyFonts = std::unordered_map<std::string, std::shared_ptr<LazyFontAsset>>();
         sounds = std::unordered_map<std::string, std::shared_ptr<AudioAsset>>();
+        npcRenderers = std::unordered_map<std::string, std::shared_ptr<NPCRendererAsset>>();
+        particles = std::unordered_map<std::string, std::shared_ptr<ParticleAsset>>();
     }   
 
     void Assets::AddTexture(SDL_Renderer* a_renderer, std::string a_path, std::string a_name) {
@@ -64,7 +66,28 @@ namespace ArsTimoris::Assets {
             std::forward_as_tuple(std::move(npcRenderer)));
     }
 
+    void Assets::AddParticle(std::string a_path, std::string a_name) {
+        std::println("Particle: {} {}", a_path, a_name);
+        std::shared_ptr<ParticleAsset> particle = std::make_shared<ParticleAsset>(a_name, a_name); 
+        particle->Load(this, a_path);
+        particles.emplace(std::piecewise_construct,
+            std::forward_as_tuple(a_name), 
+            std::forward_as_tuple(std::move(particle)));
+    }
+
     void Assets::Uninitialize(void) {
+        for (std::pair<const std::string, std::shared_ptr<ParticleAsset>>& pair : particles) {
+            pair.second->Unload();
+        }
+
+        particles.clear();
+
+        for (std::pair<const std::string, std::shared_ptr<NPCRendererAsset>>& pair : npcRenderers) {
+            pair.second->Unload();
+        }
+
+        npcRenderers.clear();
+
         for (std::pair<const std::string, std::shared_ptr<TextureAsset>>& pair : textures) {
             pair.second->Unload();
         }
@@ -76,6 +99,18 @@ namespace ArsTimoris::Assets {
         }
 
         fonts.clear();
+
+        for (std::pair<const std::string, std::shared_ptr<LazyFontAsset>>& pair : lazyFonts) {
+            pair.second->Unload();
+        }
+
+        lazyFonts.clear();
+
+        for (std::pair<const std::string, std::shared_ptr<FontAtlasAsset>>& pair : fontAtlases) {
+            pair.second->Unload();
+        }
+
+        fontAtlases.clear();
 
         for (std::pair<const std::string, std::shared_ptr<AudioAsset>>& pair : sounds) {
             pair.second->Unload();

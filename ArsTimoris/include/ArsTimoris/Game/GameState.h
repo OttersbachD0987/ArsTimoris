@@ -31,6 +31,7 @@ struct DebugData {
 public:
     bool enabled = false;  //< If the debug mode is enabled.
     bool noFights = false; //< The No Fights debug flag to avoid starting the combat menu.
+    bool drawHitboxes = false; //< The Draw Hitboxes debug flag for testing NPC hitboxes.
 };
 
 struct GameState;

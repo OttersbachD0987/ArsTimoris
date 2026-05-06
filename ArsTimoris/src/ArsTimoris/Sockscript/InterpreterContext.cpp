@@ -83,6 +83,23 @@ std::string OperatorEvaluationDisplayName(OperatorEvaluation a_operator) {
     }
 }
 
+std::string RegisterTypeDisplayName(RegisterType a_registerType) {
+    switch (a_registerType) {
+        case RegisterType::ERROR_TYPE:
+            return "ERR";
+        case RegisterType::STRING:
+            return "STR";
+        case RegisterType::INT:
+            return "INT";
+        case RegisterType::FLOAT:
+            return "FLT";
+        case RegisterType::BOOL:
+            return "BOL";
+        default:
+            return "IVD";
+    }
+}
+
 void InterpreterContext::DumpStringRegister(void) {
     for (size_t i = 0; i < stringRegisters.size(); ++i) {
         DebugLogging::ParsingOut << std::format("{}String Register {:0>2}: {}\x1b[39m", i == stringRegister ? "\x1b[32m" : "\x1b[34m", i + 1, stringRegisters[i]) << std::endl;
@@ -128,6 +145,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not ADD register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -145,6 +163,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not SUB register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -162,6 +181,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not MUL register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -179,6 +199,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not DIV register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -186,10 +207,12 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
             intRegisters[intRegister] = intRegisters[intRegister] % a_value;
             lastRegister = RegisterType::INT;
             operatorEvaluation = OperatorEvaluation::NONE;
+            return RegisterType::INT;
         case OperatorEvaluation::LSHIFT:
             intRegisters[intRegister] = intRegisters[intRegister] << a_value;
             lastRegister = RegisterType::INT;
             operatorEvaluation = OperatorEvaluation::NONE;
+            return RegisterType::INT;
         case OperatorEvaluation::RSHIFT:
             intRegisters[intRegister] = intRegisters[intRegister] >> a_value;
             lastRegister = RegisterType::INT;
@@ -225,6 +248,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not GRT register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -238,6 +262,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not GTE register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -251,6 +276,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not LST register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -264,6 +290,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not LTE register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -277,6 +304,7 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not EQU register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -290,10 +318,12 @@ RegisterType InterpreterContext::SetIntRegister(int32_t a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not NEQ register of type INT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
         default:
+            DebugLogging::ParsingOut << std::format("[ERROR] Can not {} register of type INT '{}' to a register of type {}.", OperatorEvaluationDisplayName(operatorEvaluation), a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
             lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
             return RegisterType::ERROR_TYPE;
@@ -320,6 +350,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not ADD register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -337,6 +368,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not SUB register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -354,6 +386,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not MUL register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -371,6 +404,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not DIV register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -386,6 +420,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not GRT register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -399,6 +434,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not GTE register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -412,6 +448,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not LST register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -425,6 +462,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not LTE register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -438,6 +476,7 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not EQU register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
@@ -451,15 +490,16 @@ RegisterType InterpreterContext::SetFloatRegister(float a_value) {
                 case RegisterType::BOOL:
                 case RegisterType::STRING:
                 case RegisterType::ERROR_TYPE:
+                    DebugLogging::ParsingOut << std::format("[ERROR] Can not NEQ register of type FLT '{}' to a register of type {}.", a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
                     lastRegister = RegisterType::ERROR_TYPE;
                     return RegisterType::ERROR_TYPE;
             }
         default:
+            DebugLogging::ParsingOut << std::format("[ERROR] Can not {} register of type FLT '{}' to a register of type {}.", OperatorEvaluationDisplayName(operatorEvaluation), a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
             lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
             return RegisterType::ERROR_TYPE;
     }
-    
 }
 
 RegisterType InterpreterContext::SetBoolRegister(bool a_value) {
@@ -495,6 +535,7 @@ RegisterType InterpreterContext::SetBoolRegister(bool a_value) {
             operatorEvaluation = OperatorEvaluation::NONE;
             return RegisterType::BOOL;
         default:
+            DebugLogging::ParsingOut << std::format("[ERROR] Can not {} register of type BOL '{}' to a register of type {}.", OperatorEvaluationDisplayName(operatorEvaluation), a_value, RegisterTypeDisplayName(lastRegister)) << std::endl;
             lastRegister = RegisterType::ERROR_TYPE;
             operatorEvaluation = OperatorEvaluation::NONE;
             return RegisterType::ERROR_TYPE;

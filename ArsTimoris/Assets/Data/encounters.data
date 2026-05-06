@@ -21,7 +21,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("Nothing happens as you enter the room.\n");
+    console.Print("Nothing happens as you enter the room.");
     end;
 }}
 
@@ -38,9 +38,9 @@ CONTINUE;
 {{
     if (player.maxMana <= 0) {
         if (player.HasPerk(ARCANE_EYES)) {
-            console.Print("There is a mana fountain in the area, but you can't benefit from it.\n");
+            console.Print("There is a mana fountain in the area, but you can't benefit from it.");
         } else {
-            console.Print("Nothing of interest can be found in the room.\n");
+            console.Print("Nothing of interest can be found in the room.");
         } end;
         end;
     } end;
@@ -48,16 +48,16 @@ CONTINUE;
     console.Print("A mana fountain is in the area, ");
 
     if (player.curMana == player.maxMana) {
-        console.Print("however, you are already at your maximum.\n");
+        console.Print("however, you are already at your maximum.");
     } elif (player.curMana > player.maxMana) {
-        console.Print("however, due to you being overloaded with mana, you take 5 damage.\n");
+        console.Print("however, due to you being overloaded with mana, you take 5 damage.");
         player.Hurt(5);
     } else {
         manaGain<uint32> = mathi.Min(player.maxMana - player.curMana, 25);
-        console.Print("you have regained {uint32@manaGain@} mana.\n");
+        console.Print("you have regained {uint32@manaGain@} mana.");
         player.RegainMana(uint32@manaGain@);
         if (player.curMana == player.maxMana) {
-            console.Print("Your mana is fully replinished.\n");
+            console.Print("\nYour mana is fully replinished.");
         } end;
         delete manaGain;
     } end;
@@ -78,15 +78,15 @@ CONTINUE;
     console.Print("A restorative spring is in the area, ");
 
     if (player.curHP == player.maxHP) {
-        console.Print("however, you are already at your maximum health.\n");
+        console.Print("however, you are already at your maximum health.");
     } elif (player.curHP > player.maxHP) {
-        console.Print("however, you are healthier than is expected.\n");
+        console.Print("however, you are healthier than is expected.");
     } else {
         hpGain<uint32> = mathi.Min(player.maxHP - player.curHP, 25);
-        console.Print("you have regained {uint32@hpGain@} health.\n");
+        console.Print("you have regained {uint32@hpGain@} health.");
         player.Heal(uint32@hpGain@);
         if (player.curHP == player.maxHP) {
-            console.Print("Your health is fully replinished.\n");
+            console.Print("\nYour health is fully replinished.");
         } end;
         delete hpGain;
     } end;
@@ -104,7 +104,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("With a distinctive sound, three goblins emerge from hidden locations and surround you.\n");
+    console.Print("With a distinctive sound, three goblins emerge from hidden locations and surround you.");
     room.AddInhabitant("Goblin", "Grunt", 0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Grunt", 40.0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Shaman", 20.0, 0, "GoblinShaman", "Shaman");
@@ -154,7 +154,7 @@ CONTINUE;
         player.AddSkillModifier("Brawling", random.RollDice(1, 4));
     } end;
 
-    console.Print("There is a training dummy in the middle of the room... You feel better at something.\n");
+    console.Print("There is a training dummy in the middle of the room... You feel better at something.");
     delete roll;
     end;
 }}
