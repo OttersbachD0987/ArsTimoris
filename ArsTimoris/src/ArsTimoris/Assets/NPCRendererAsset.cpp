@@ -132,6 +132,12 @@ namespace ArsTimoris {
                                         readBlendmode = SDL_BLENDMODE_BLEND;
                                     } else if (registers.back() == "add") {
                                         readBlendmode = SDL_BLENDMODE_ADD;
+                                    } else if (registers.back() == "mod") {
+                                        readBlendmode = SDL_BLENDMODE_MOD;
+                                    } else if (registers.back() == "mul") {
+                                        readBlendmode = SDL_BLENDMODE_MUL;
+                                    } else if (registers.back() == "none") {
+                                        readBlendmode = SDL_BLENDMODE_NONE;
                                     }
                                     registers.pop_back();
                                     uint8_t readAlpha = std::stoi(registers.back());
