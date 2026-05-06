@@ -2069,7 +2069,7 @@ int main(int argc, char** argv) {
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command(
         "debug", 
-        "Toggle debug mode."
+        "Toggle debug mode.",
         [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
             gameState.debug.enabled = !gameState.debug.enabled;
             std::cout << "Debug mode " << (gameState.debug.enabled ? "enabled" : "disabled") << "." << std::endl;
@@ -2078,7 +2078,7 @@ int main(int argc, char** argv) {
 
     commandHandler.AddCommand(ArsTimoris::Commands::Command(
         "no_fights", 
-        "Toggle No Fights cheat."
+        "Toggle No Fights cheat.",
         [&](const ArsTimoris::Commands::CommandHandler& handler, const std::vector<ArsTimoris::Commands::Parameter>& parameters) {
             gameState.debug.noFights = !gameState.debug.noFights;
             std::cout << "No Fights " << (gameState.debug.noFights ? "enabled" : "disabled") << "." << std::endl;
