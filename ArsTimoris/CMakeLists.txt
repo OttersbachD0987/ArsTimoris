@@ -14,7 +14,6 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED) 
 find_package(SDL3_ttf CONFIG REQUIRED)
 find_package(platform_folders CONFIG REQUIRED)
-find_package(Boost REQUIRED COMPONENTS asio)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_definitions(__DEBUG_ASSERTS__)
@@ -32,8 +31,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     $<TARGET_NAME_IF_EXISTS:SDL3::SDL3main> $<IF:$<TARGET_EXISTS:SDL3::SDL3>,SDL3::SDL3,SDL3::SDL3-static>
     $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image>,SDL3_image::SDL3_image,SDL3_image::SDL3_image-static>
     SDL3_ttf::SDL3_ttf
-    sago::platform_folders
-    Boost::asio)
+    sago::platform_folders)
 
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/${PROJECT_NAME}"

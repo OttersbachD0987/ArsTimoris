@@ -1,4 +1,6 @@
 #include <ArsTimoris/Assets/Assets.h>
+#include <ArsTimoris/Game/TimeData.h>
+
 #include <iostream>
 #include <fstream>
 #include <print>
@@ -32,7 +34,7 @@ namespace ArsTimoris {
             instances.push_back(a_particle);
         }
 
-        void ParticleAsset::Render(SDL_Renderer* a_renderer, float a_deltaTime) {
+        void ParticleAsset::Render(SDL_Renderer* a_renderer, TimeData* a_timeData) {
             if (instances.size() <= 0) {
                 return;
             }
@@ -47,20 +49,20 @@ namespace ArsTimoris {
             SDL_SetTextureColorMod(texture->texture, tintR, tintG, tintB);
             SDL_SetTextureAlphaMod(texture->texture, tintA);
             SDL_SetTextureBlendMode(texture->texture, blendmode);
-            for (int32_t i = instances.size() - 1; i > 0; --i) {
+            for (int32_t i = (int32_t)instances.size() - 1; i > 0; --i) {
                 Visual::Particle::ParticleData& particle = instances[i];
-                if ((particle.timeLeft -= a_deltaTime) < 0) {
+                if ((particle.timeLeft -= a_timeData->deltaTime_s) < 0) {
                     particle = std::move(instances.back());
                     instances.pop_back();
                     continue;
                 }
                 destination = SDL_FRect{
-                    (particle.position.x += particle.linearVelocity.x * a_deltaTime) - (drawCenter.x = center.x * particle.scale), 
-                    (particle.position.y += particle.linearVelocity.y * a_deltaTime) - (drawCenter.y = center.y * particle.scale), 
+                    (particle.position.x += particle.linearVelocity.x * a_timeData->deltaTime_s) - (drawCenter.x = center.x * particle.scale), 
+                    (particle.position.y += particle.linearVelocity.y * a_timeData->deltaTime_s) - (drawCenter.y = center.y * particle.scale), 
                     texture->w * particle.scale, 
                     texture->h * particle.scale
                 };
-                SDL_RenderTextureRotated(a_renderer, texture->texture, NULL, &destination, (particle.angle += particle.angularVelocity * a_deltaTime), &drawCenter, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(a_renderer, texture->texture, NULL, &destination, (particle.angle += particle.angularVelocity * a_timeData->deltaTime_s), &drawCenter, SDL_FLIP_NONE);
             }
             SDL_SetTextureColorMod(texture->texture, oldR, oldG, oldB);
             SDL_SetTextureAlphaMod(texture->texture, oldA);

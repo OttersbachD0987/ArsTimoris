@@ -5,15 +5,17 @@
 #include <vector>
 #include <SDL3/SDL.h>
 
+struct TimeData;
+
 namespace ArsTimoris::Visual {
     struct RenderPassData;
 
     namespace NPC {
         struct NPCRenderStep {
         public:
-            std::vector<std::function<void(RenderPassData*, float)>> modifiers = std::vector<std::function<void(RenderPassData*, float)>>();
+            std::vector<std::function<void(RenderPassData*, TimeData*)>> modifiers = std::vector<std::function<void(RenderPassData*, TimeData*)>>();
 
-            virtual void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time) = 0;
+            virtual void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, TimeData* a_timeData) = 0;
             virtual ~NPCRenderStep() {};
         };
     }

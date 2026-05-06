@@ -95,8 +95,12 @@ public:
 
     void InitializeRoom(RoomInstance* const a_roomInstance);
 
+    /// @brief Push a new message to the message stack.
+    /// @param a_message The message content.
     void AddMessage(std::string a_message);
 
+    /// @brief Append to the end of the last message, or if there is none, push a new message to the message stack.
+    /// @param a_message The message content.
     void AppendMessage(std::string a_message);
 };
 

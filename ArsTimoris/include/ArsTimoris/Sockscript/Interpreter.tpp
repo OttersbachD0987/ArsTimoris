@@ -449,7 +449,7 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
                     }
                     case ')': {
                         if (embedLevel-- <= 0) {
-                            ifTrue.push_back(std::pair<int32_t, bool>(context.currentLevel, ParseBoolExpression(a_gameState, context, context.stringRegisters[context.stringRegister])));
+                            ifTrue.push_back(std::pair<int32_t, bool>((int32_t)context.currentLevel, ParseBoolExpression(a_gameState, context, context.stringRegisters[context.stringRegister])));
                             context.mode.pop_back();
                             if (!ifTrue.back().second) {
                                 context.mode.push_back(ReaderMode::FALLTHROUGH);
@@ -507,6 +507,8 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
         }
     }
 
+    #pragma warning(push)
+    #pragma warning(disable: 4302 4311 4267)
     switch (a_returnType) {
         case RegisterType::INT:
         case RegisterType::FLOAT:
@@ -516,6 +518,7 @@ T Interpreter::ParseStatement(GameState& a_gameState, RegisterType a_returnType,
         case RegisterType::STRING:
             return (T)"";
     }
+    #pragma warning(pop)
     
     return (T)0;
 }

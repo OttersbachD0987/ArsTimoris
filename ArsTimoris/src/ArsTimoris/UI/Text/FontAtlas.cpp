@@ -150,7 +150,7 @@ namespace ArsTimoris::UI::Text {
         //std::println("String ({}) is bounded by {} lines of {} characters.", a_text, lines, foundWidth);
         int32_t y = x = 0;
         escaped = collecting = false;
-        int32_t lines = lineLengths.size();
+        int32_t lines = (int32_t)lineLengths.size();
         int32_t width = paddedGlyphWidth * foundWidth - 2;
         int32_t height = paddedGlyphHeight * lines - 2;
         std::string accum = "";

@@ -17,8 +17,8 @@ namespace ArsTimoris::Assets {
             std::cout << "Error loading font atlas image: " << SDL_GetError() << std::endl;
         }
 
-        this->fontAtlas->atlasWidth = this->fontAtlas->atlas->w;
-        this->fontAtlas->atlasHeight = this->fontAtlas->atlas->h;
+        this->fontAtlas->atlasWidth = (float)this->fontAtlas->atlas->w;
+        this->fontAtlas->atlasHeight = (float)this->fontAtlas->atlas->h;
 
         /*
          1 - 1.0000
@@ -28,8 +28,8 @@ namespace ArsTimoris::Assets {
         16 - 0.0625
         */
 
-        this->fontAtlas->glyphWidth = this->fontAtlas->atlasWidth * 0.0625f;
-        this->fontAtlas->glyphHeight = this->fontAtlas->atlasHeight * 0.0625f;
+        this->fontAtlas->glyphWidth = (uint32_t)(this->fontAtlas->atlasWidth * 0.0625f);
+        this->fontAtlas->glyphHeight = (uint32_t)(this->fontAtlas->atlasHeight * 0.0625f);
     }
 
     void FontAtlasAsset::Unload(void) {

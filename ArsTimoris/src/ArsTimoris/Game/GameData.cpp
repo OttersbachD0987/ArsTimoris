@@ -86,14 +86,10 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                         
                         a_gameState.AppendMessage(std::format(" - {}", -damageModifier));
                     }
-                    a_gameState.AppendMessage(").\n");
+                    a_gameState.AppendMessage(").");
                 } else {
-                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).\n", result, roll, modifier));
+                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).", result, roll, modifier));
                 }
-
-                //std::cout << "Prae Nom" << std::endl;
-                //EatInput();
-                //std::cout << "Post Nom" << std::endl;
 
                 if (player != nullptr) {
                     ++player->usedTurns;
@@ -122,10 +118,7 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                         break;
                 }
                 PlayerData* player = dynamic_cast<PlayerData*>(a_caster);
-                size_t opponents = 1;
-                if (player != nullptr) {
-                    opponents = a_gameState.rooms[a_gameState.curRoom].LivingInhabitants();
-                }
+                size_t opponents = player != nullptr ? a_gameState.rooms[a_gameState.curRoom].LivingInhabitants() : 1;
                 if (opponents == 1) {
                     modifier += a_caster->GetSkillModifier("Dueling");
                 } else {
@@ -143,10 +136,8 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                     int32_t damage = 0;
                     int32_t damageModifier = (int32_t)(modifier * 0.5);
                     int32_t damageTier = 1;
-                    if (player != nullptr) {
-                        if (opponents > 3 && player->perks.test((size_t)Perks::HORDE_SLAYER)) {
-                            damageTier += 1;
-                        }
+                    if (player != nullptr && opponents > 3 && player->perks.test((size_t)Perks::HORDE_SLAYER)) {
+                        damageTier += 1;
                     }
 
                     if (modifier >= 12) {
@@ -254,15 +245,12 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                     if (damageModifier > 0) {
                         a_gameState.AppendMessage(std::format(" + {}", damageModifier));
                     } else if (damageModifier < 0) {
-                        
                         a_gameState.AppendMessage(std::format(" - {}", -damageModifier));
                     }
-                    a_gameState.AppendMessage(").\n");
+                    a_gameState.AppendMessage(").");
                 } else {
-                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).\n", result, roll, modifier));
+                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).", result, roll, modifier));
                 }
-
-                //EatInput();
 
                 if (player != nullptr && a_gameState.rooms[a_gameState.curRoom].LivingInhabitants() <= 1 || a_target->curHP > 0 || a_gameState.RollDice(1, 3) != 1) {
                     ++player->usedTurns;
@@ -302,7 +290,6 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                     damage += a_gameState.RollDice(2, 4) + a_gameState.RollDice(1, 6);
 
                     a_target->Hurt(damage + damageModifier);
-                    //std::cout << "and a torrent of whispers comes forth from the ether with a " << result << " (" << roll << " + " << modifier << "), dealing " << (damage + damageModifier) << " (" << damage << " (2d4 + 1d6)"; 
 
                     a_gameState.AppendMessage(std::format("and a torrent of whispers comes forth from the ether with a {} ({} + {}), dealing {} ({} (2d4 + 1d6)", result, roll, modifier, damage + damageModifier, damage));
                     if (damageModifier > 0) {
@@ -311,8 +298,7 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                         
                         a_gameState.AppendMessage(std::format(" - {}", -damageModifier));
                     }
-                    a_gameState.AppendMessage(").\n");
-                    //EatInput();
+                    a_gameState.AppendMessage(").");
 
                     if (player != nullptr) {
                         for (size_t i = 0; i < a_gameState.rooms[a_gameState.curRoom].inhabitants.size(); ++i) {
@@ -339,8 +325,6 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                                     a_caster->RegainMana((int32_t)(a_gameState.rooms[a_gameState.curRoom].inhabitants[i].maxHP * 0.15));
                                 }
                             }
-
-                            EatInput();
                         }
                     } else {
                         if (a_gameState.player.curHP > 0) {
@@ -366,12 +350,9 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                                 a_caster->RegainMana((int32_t)(a_gameState.player.maxHP * 0.15));
                             }
                         }
-
-                        //EatInput();
                     }
                 } else {
-                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).\n", result, roll, modifier));
-                    //EatInput();
+                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).", result, roll, modifier));
                 }
 
                 if (player != nullptr) {
@@ -415,10 +396,8 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                         );
                     }
                 } else {
-                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).\n", result, roll, modifier));
+                    a_gameState.AppendMessage(std::format("and misses with a {} ({} + {}).", result, roll, modifier));
                 }
-
-                //EatInput();
 
                 PlayerData* player = dynamic_cast<PlayerData*>(a_caster);
                 if (player != nullptr) {
@@ -451,8 +430,6 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                     }
                 }
 
-                //EatInput();
-
                 PlayerData* player = dynamic_cast<PlayerData*>(a_caster);
                 if (player != nullptr) {
                     ++player->usedTurns;
@@ -470,7 +447,7 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 return a_caster->curMana > 45; 
             },
             [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) {
-                a_gameState.AppendMessage("The player crushes a heart, and from the ground a flower bursts from the center of the room.");
+                a_gameState.AddMessage("The player crushes a heart, and from the ground a flower bursts from the center of the room.");
                 int32_t modifier = 
                     a_caster->GetSkillModifier("Persuasion") + 
                     a_caster->GetSkillModifier("Knowledge of Death") + 
@@ -484,7 +461,22 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 int32_t roll = a_gameState.RollDice(1, 20);
                 int32_t result = roll + modifier;
 
-                //EatInput();
+                for (NPCData& npc : a_gameState.rooms[a_gameState.curRoom].inhabitants) {
+                    if (npc.curHP <= 0) {
+                        continue;
+                    }
+
+                    a_gameState.AppendMessage(std::format("\nThe {} is enveloped by the decaying miasma of the bloom, ", npc.name));
+
+                    if (roll == 20 || result >= npc.curHP) {
+                        a_gameState.AppendMessage("and collapses from the decay.");
+                        npc.Hurt(npc.curHP);
+                    } else if (a_gameState.player.perks.test((size_t)Perks::INSIGHT)) {
+                        a_gameState.AppendMessage(std::format("but resists by {} ({} - {} ({} + {})).", npc.curHP - result, npc.curHP, result, roll, modifier));
+                    } else {
+                        a_gameState.AppendMessage("but is entirely unaffected.");
+                    }
+                }
 
                 PlayerData* player = dynamic_cast<PlayerData*>(a_caster);
                 if (player != nullptr) {

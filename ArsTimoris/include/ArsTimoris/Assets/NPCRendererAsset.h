@@ -25,7 +25,7 @@ namespace ArsTimoris {
             int32_t width;
             int32_t height;
 
-            void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time);
+            void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, TimeData* a_timeData);
             /// @brief 
             /// @param a_path 
             void Load(Assets* a_assets, std::string a_path);

@@ -17,7 +17,7 @@ namespace ArsTimoris {
             SDL_BlendMode blendmode;
 
             NPCImageStep(std::shared_ptr<Assets::TextureAsset> a_image, uint8_t a_alpha, SDL_BlendMode a_blendmode);
-            void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, float a_time);
+            void Render(SDL_Renderer* a_renderer, SDL_FRect a_rect, TimeData* a_timeData);
             ~NPCImageStep();
         };
     }

@@ -140,12 +140,12 @@ namespace DataComponents {
                                 mode = ReaderMode::COLLECTING_NAME;
                                 switch (dataType) {
                                     case DataType::UINT8: {
-                                        uint8_t data = std::stoul(collectorData);
+                                        uint8_t data = (uint8_t)std::stoul(collectorData);
                                         container.Set(collectorName, dataType, data, sizeof(uint8_t));
                                         break;
                                     }
                                     case DataType::UINT16: {
-                                        uint16_t data = std::stoul(collectorData);
+                                        uint16_t data = (uint16_t)std::stoul(collectorData);
                                         container.Set(collectorName, dataType, data, sizeof(uint16_t));
                                         break;
                                     }

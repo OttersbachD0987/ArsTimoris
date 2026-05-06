@@ -19,6 +19,7 @@
 #include <ArsTimoris/DataComponents/DataContainer.h>
 #include <ArsTimoris/Game/Map/RoomData.h>
 #include <ArsTimoris/Game/GameState.h>
+#include <ArsTimoris/Game/TimeData.h>
 #include <ArsTimoris/UI/Text/FontAtlas.h>
 #include <ArsTimoris/UI/UIAtlasTextComponent.h>
 #include <ArsTimoris/UI/UIImageComponent.h>
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
             this->area = a_area;
             this->renderer = a_renderer;
             this->index = a_index;
-            SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, area.w);
+            SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, (int32_t)area.w);
             this->armorArea = SDL_FRect{area.x, area.y, (float)armorSurface->w * 2.0f, (float)armorSurface->h * 2.0f};
             this->armorTexture = SDL_CreateTextureFromSurface(a_gameState.renderer, armorSurface);
             SDL_SetTextureScaleMode(armorTexture, SDL_SCALEMODE_NEAREST);
@@ -111,7 +112,7 @@ int main(int argc, char** argv) {
 
         void UpdateArmor(GameState& a_gameState, int32_t a_armor) {
             SDL_DestroyTexture(armorTexture);
-            SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, area.w);
+            SDL_Surface* armorSurface = a_gameState.assets.fontAtlases.at("BitCrusher")->fontAtlas->RenderWrapped(std::format("{}", a_armor), 2, {255, 255, 255, SDL_ALPHA_OPAQUE}, (int32_t)area.w);
             this->armorArea = SDL_FRect{area.x, area.y, (float)armorSurface->w * 2.0f, (float)armorSurface->h * 2.0f};
             this->armorTexture = SDL_CreateTextureFromSurface(a_gameState.renderer, armorSurface);
             SDL_SetTextureScaleMode(armorTexture, SDL_SCALEMODE_NEAREST);
@@ -1858,7 +1859,7 @@ int main(int argc, char** argv) {
         shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
         shopNameText->SetText(gameState, shop->shopName);
         int32_t shopPager = shopPage * 6;
-        for (size_t i = 0; i < 6; ++i) {
+        for (int32_t i = 0; i < 6; ++i) {
             shopCatalogs[i].index = shopPager + i;
             if (shopPager + i < shop->catalog.size()) {
                 shopCatalogs[i].header->SetText(gameState, std::format("{} ({}) x{}", GameData::ITEM_DATA[shop->catalog[i].stack.itemID].name, shop->catalog[i].cost, shop->catalog[i].stack.stackSize));
@@ -1884,12 +1885,9 @@ int main(int argc, char** argv) {
     size_t encounter;
     bool runEncounter = false;
     SDL_Event event;
-    uint64_t deltaTime;
-    uint64_t lastTime = SDL_GetTicks();
+    TimeData timeData = TimeData{0, SDL_GetTicks(), 0.0f, 0.0f};
     gameState.inputData.keys = SDL_GetKeyboardState(&gameState.inputData.numKeys);
     gameState.inputData.oldKeys = (bool*)malloc(gameState.inputData.numKeys);
-    float totalTime = 0.0f;
-    float deltaTimeSeconds = 0.0f;
 
     #pragma region Commands
     ArsTimoris::Commands::CommandHandler commandHandler = ArsTimoris::Commands::CommandHandler();
@@ -2078,8 +2076,8 @@ int main(int argc, char** argv) {
 
     while (gameState.running) {
         // Timekeeping stuff, perhaps put this in a struct called TimeData for easier usage...?
-        totalTime += (deltaTimeSeconds = (0.001f * (float)(deltaTime = (SDL_GetTicks() - lastTime))));
-        lastTime = SDL_GetTicks();
+        timeData.totalTime_s += (timeData.deltaTime_s = (0.001f * (float)(timeData.deltaTime_ms = (SDL_GetTicks() - timeData.lastTime_ms))));
+        timeData.lastTime_ms = SDL_GetTicks();
 
         gameState.CacheInputState();
 
@@ -2206,7 +2204,7 @@ int main(int argc, char** argv) {
                                             break;
                                         case SDLK_A:
                                             if (--choice < 0) {
-                                                choice = gameState.rooms[gameState.curRoom].connections.size() - 1;
+                                                choice = (int32_t)gameState.rooms[gameState.curRoom].connections.size() - 1;
                                             }
                                             break;
                                         case SDLK_D:
@@ -2224,7 +2222,7 @@ int main(int argc, char** argv) {
                                         gameState.menu = Menu::NONE;
                                     } else if (event.key.key == SDLK_A) {
                                         if (--choice < 0) {
-                                            choice = gameState.rooms[gameState.curRoom].roomActions.size() - 1;
+                                            choice = (int32_t)gameState.rooms[gameState.curRoom].roomActions.size() - 1;
                                         }
                                     } else if (event.key.key == SDLK_D) {
                                         if (++choice >= gameState.rooms[gameState.curRoom].roomActions.size()) {
@@ -2236,7 +2234,7 @@ int main(int argc, char** argv) {
                                 case Menu::COMBAT: {
                                     if (event.key.key == SDLK_S) {
                                         if (--choice < 0) {
-                                            choice = gameState.player.actions.size() - 1;
+                                            choice = (int32_t)gameState.player.actions.size() - 1;
                                         }
                                     } else if (event.key.key == SDLK_W) {
                                         if (++choice >= gameState.player.actions.size()) {
@@ -2257,7 +2255,7 @@ int main(int argc, char** argv) {
                                         gameState.menu = Menu::STATS;
                                     } else if (event.key.key == SDLK_A) {
                                         if (--classChoice < 0) {
-                                            classChoice = classNames.size() - 1;
+                                            classChoice = (int32_t)classNames.size() - 1;
                                         }
                                         UpdateLevelUp();
                                     } else if (event.key.key == SDLK_D) {
@@ -2445,7 +2443,7 @@ int main(int argc, char** argv) {
 
                                 std::vector<size_t> remove = std::vector<size_t>();
 
-                                for (int32_t j = room->inhabitants.size() - 1; j > -1; --j) {
+                                for (int32_t j = (int32_t)room->inhabitants.size() - 1; j > -1; --j) {
                                     if (room->inhabitants[j].curHP <= 0) {
                                         gameState.player.xp += room->inhabitants[j].xp;
                                         gameState.player.gold += room->inhabitants[j].gold;
@@ -2478,7 +2476,7 @@ int main(int argc, char** argv) {
                                 }
                             } else {
                                 bool ok = false;
-                                for (int32_t j = room->inhabitants.size() - 1; j > -1; --j) {
+                                for (int32_t j = (int32_t)room->inhabitants.size() - 1; j > -1; --j) {
                                     if (room->inhabitants[j].curHP > 0) {
                                         ok = true;
                                         break;
@@ -2632,8 +2630,8 @@ int main(int argc, char** argv) {
                         SDL_FRect fillMP = {54, 700.0f - 100.0f * mpPerc, 20, 100.0f * mpPerc};
                         SDL_RenderFillRect(gameState.renderer, &fillMP);
 
-                        for (int32_t i = combatNPCs.size() - 1; i >= 0; --i) {
-                            combatNPCs[i].renderer->Render(gameState.renderer, combatNPCs[i].area, totalTime);
+                        for (int32_t i = (int32_t)combatNPCs.size() - 1; i >= 0; --i) {
+                            combatNPCs[i].renderer->Render(gameState.renderer, combatNPCs[i].area, &timeData);
 
                             if (gameState.debug.drawHitboxes) {
                                 SDL_SetRenderDrawColor(gameState.renderer, 205, 125, 125, 200);
@@ -2685,7 +2683,7 @@ int main(int argc, char** argv) {
         }
 
         for (std::pair<const std::string, std::shared_ptr<ArsTimoris::Assets::ParticleAsset>>& particlePair : gameState.assets.particles) {
-            particlePair.second->Render(gameState.renderer, deltaTimeSeconds);
+            particlePair.second->Render(gameState.renderer, &timeData);
         }
 
         gameState.uiManager.Render(gameState);

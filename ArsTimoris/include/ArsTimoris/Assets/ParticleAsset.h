@@ -7,6 +7,8 @@
 #include <vector>
 #include <memory>
 
+struct TimeData;
+
 namespace ArsTimoris {
     namespace Assets {
         class Assets;
@@ -31,7 +33,7 @@ namespace ArsTimoris {
             SDL_BlendMode blendmode;
 
             void SpawnParticle(Visual::Particle::ParticleData a_particle);
-            void Render(SDL_Renderer* a_renderer, float a_deltaTime);
+            void Render(SDL_Renderer* a_renderer, TimeData* a_timeData);
             /// @brief 
             /// @param a_path 
             void Load(Assets* a_assets, std::string a_path);
