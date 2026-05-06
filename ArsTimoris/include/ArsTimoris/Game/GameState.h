@@ -51,6 +51,7 @@ public:
 
     DebugData debug = DebugData();
 
+    bool justSwapped = false;
     bool running = true;
     Screen screen;
     Menu menu;

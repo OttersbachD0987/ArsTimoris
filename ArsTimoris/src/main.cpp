@@ -2824,6 +2824,14 @@ int main(int argc, char** argv) {
                             */
                         break;
                     }
+                    case Menu::SHOP: {
+                        if (gameState.justSwapped) {
+                            shopMenu->enabled = true;
+                            gameState.justSwapped = false;
+                            UpdateShopMenu();
+                        }
+                        break;
+                    }
                 }
                 break;
             }

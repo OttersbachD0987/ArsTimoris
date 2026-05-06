@@ -923,6 +923,7 @@ std::unordered_map<std::string, RoomAction> GameData::ROOM_ACTIONS = {
             },
             [](GameState& a_gameState) {
                 a_gameState.menu = Menu::SHOP;
+                a_gameState.justSwapped = true;
                 /*
                 size_t option = 0;
                 while (option != 3) {
