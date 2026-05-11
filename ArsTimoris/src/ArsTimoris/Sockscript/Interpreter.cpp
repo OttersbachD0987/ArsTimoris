@@ -33,10 +33,16 @@ int32_t Interpreter::ParseIntExpression(GameState& a_gameState, InterpreterConte
                     case '\n':
                     case '\t':
                     case '\v':
-                        if (context.stringRegisters[context.stringRegister] != "") {
+                        if (context.stringRegisters[context.stringRegister] == "-") {
+                            context.stringRegisters[context.stringRegister] = "";
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else if (context.stringRegisters[context.stringRegister] != "") {
                             ParseRawType(a_gameState, context);
+                            justOperated = false;
+                        } else {
+                            justOperated = false;
                         }
-                        justOperated = false;
                         break;
                     case '@':
                         context.stringRegister += 1;
@@ -303,10 +309,16 @@ float Interpreter::ParseFloatExpression(GameState& a_gameState, InterpreterConte
                     case '\n':
                     case '\t':
                     case '\v':
-                        if (context.stringRegisters[context.stringRegister] != "") {
+                        if (context.stringRegisters[context.stringRegister] == "-") {
+                            context.stringRegisters[context.stringRegister] = "";
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else if (context.stringRegisters[context.stringRegister] != "") {
                             ParseRawType(a_gameState, context);
+                            justOperated = false;
+                        } else {
+                            justOperated = false;
                         }
-                        justOperated = false;
                         break;
                     case '@':
                         context.stringRegister += 1;
@@ -574,10 +586,16 @@ int32_t Interpreter::ParseBoolExpression(GameState& a_gameState, InterpreterCont
                     case '\n':
                     case '\t':
                     case '\v':
-                        if (context.stringRegisters[context.stringRegister] != "") {
+                        if (context.stringRegisters[context.stringRegister] == "-") {
+                            context.stringRegisters[context.stringRegister] = "";
+                            context.operatorEvaluation = OperatorEvaluation::SUBT;
+                            justOperated = true;
+                        } else if (context.stringRegisters[context.stringRegister] != "") {
                             ParseRawType(a_gameState, context);
+                            justOperated = false;
+                        } else {
+                            justOperated = false;
                         }
-                        justOperated = false;
                         break;
                     case '@':
                         context.stringRegister += 1;
