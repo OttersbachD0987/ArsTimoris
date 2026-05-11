@@ -22,6 +22,20 @@ int32_t ItemStack::GetMetadata(const std::string& a_key, int32_t a_default) {
     return metadata.contains(a_key) ? metadata.at(a_key) : a_default;
 }
 
+bool ItemStack::Compare(ItemStack* a_other) {
+    if (a_other->itemID != itemID || a_other->metadata.size() != metadata.size()) {
+        return false;
+    }
+
+    for (const std::pair<std::string, uint32_t>& metaPair : a_other->metadata) {
+        if (!metadata.contains(metaPair.first) || metadata.at(metaPair.first) != metaPair.second) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 ItemStack ItemStack::FromString(std::string_view a_serialized) {
     ItemStack itemStack;
     std::string collector = "";

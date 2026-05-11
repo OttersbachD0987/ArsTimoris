@@ -26,6 +26,8 @@ public:
 
     int32_t GetMetadata(const std::string& a_key, int32_t a_default = 0);
 
+    bool Compare(ItemStack* a_other);
+
     static ItemStack FromString(std::string_view a_serialized);
 };
 #endif

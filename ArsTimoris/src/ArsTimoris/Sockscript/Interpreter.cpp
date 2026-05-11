@@ -1374,7 +1374,10 @@ void Interpreter::ParseObjectMethod(GameState& a_gameState, InterpreterContext& 
             a_context.mode.push_back(ReaderMode::ARGS);
         }
     } else if (object == "console") {
-        if (a_context.stringRegisters[a_context.stringRegister] == "Print") {
+        if (a_context.stringRegisters[a_context.stringRegister] == "PrintLine") {
+            a_context.stringRegister += 1;
+            a_context.mode.push_back(ReaderMode::ARGS);
+        } else if (a_context.stringRegisters[a_context.stringRegister] == "Print") {
             a_context.stringRegister += 1;
             a_context.mode.push_back(ReaderMode::ARGS);
         } else if (a_context.stringRegisters[a_context.stringRegister] == "EatInput") {
@@ -1653,10 +1656,16 @@ void Interpreter::ParseObjectMethodArgs(GameState& a_gameState, InterpreterConte
 
         a_context.stringRegister += 1;
     } else if (object == "console") {
-        if (method == "Print") {
+        if (method == "PrintLine") {
             if (argc == 1) {
                 std::string message = FormatString(a_gameState, a_context, args[0]);
-                //DebugLogging::ParsingOut << message << std::endl;
+                a_gameState.AddMessage(message);
+            } else {
+                DebugLogging::ParsingOut << "[ERROR]: console.PrintLine must have 1 argument, this call has " << argc << "." << std::endl;
+            }
+        } else if (method == "Print") {
+            if (argc == 1) {
+                std::string message = FormatString(a_gameState, a_context, args[0]);
                 a_gameState.AppendMessage(message);
             } else {
                 DebugLogging::ParsingOut << "[ERROR]: console.Print must have 1 argument, this call has " << argc << "." << std::endl;

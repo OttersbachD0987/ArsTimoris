@@ -46,8 +46,10 @@ public:
     void UseItemOf(size_t a_itemID);
 
     void AddItem(size_t a_itemID, uint32_t a_itemAmount);
+    void AddItemStack(ItemStack a_stack);
 
     bool HasItem(size_t a_itemID, uint32_t a_itemAmount);
+    bool HasItemStack(ItemStack* a_stack);
     std::optional<size_t> HasMatchingEquippedItem(GameState& a_gameState, const std::function<bool(GameState&, const ItemStack&)>& a_predicate);
     #pragma endregion
 

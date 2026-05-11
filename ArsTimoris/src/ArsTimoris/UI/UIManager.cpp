@@ -3,16 +3,17 @@
 
 namespace ArsTimoris::UI { 
     UIManager::UIManager() {
-        uiLayers = std::unordered_map<std::string, UILayer>();
+        this->uiLayers = std::unordered_map<std::string, UILayer>();
+        this->renderOrder = std::vector<std::string>();
     }
 
     void UIManager::Render(GameState& a_gameState) {
-        for (std::pair<const std::string, UILayer>& pair : this->uiLayers) {
-            if (!pair.second.enabled) {
+        for (const std::string& layer : this->renderOrder) {
+            if (!uiLayers.at(layer).enabled) {
                 continue;
             }
 
-            pair.second.Render(a_gameState);
+            uiLayers.at(layer).Render(a_gameState);
         }
     }
 

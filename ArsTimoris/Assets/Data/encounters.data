@@ -21,7 +21,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("Nothing happens as you enter the room.");
+    console.PrintLine("Nothing happens as you enter the room.");
     end;
 }}
 
@@ -38,14 +38,14 @@ CONTINUE;
 {{
     if (player.maxMana <= 0) {
         if (player.HasPerk(ARCANE_EYES)) {
-            console.Print("There is a mana fountain in the area, but you can't benefit from it.");
+            console.PrintLine("There is a mana fountain in the area, but you can't benefit from it.");
         } else {
-            console.Print("Nothing of interest can be found in the room.");
+            console.PrintLine("Nothing of interest can be found in the room.");
         } end;
         end;
     } end;
 
-    console.Print("A mana fountain is in the area, ");
+    console.PrintLine("A mana fountain is in the area, ");
 
     if (player.curMana == player.maxMana) {
         console.Print("however, you are already at your maximum.");
@@ -75,7 +75,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("A restorative spring is in the area, ");
+    console.PrintLine("A restorative spring is in the area, ");
 
     if (player.curHP == player.maxHP) {
         console.Print("however, you are already at your maximum health.");
@@ -104,7 +104,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("With a distinctive sound, three goblins emerge from hidden locations and surround you.");
+    console.PrintLine("With a distinctive sound, three goblins emerge from hidden locations and surround you.");
     room.AddInhabitant("Goblin", "Grunt", 0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Grunt", 40.0, 0, "Goblin", "Grunt");
     room.AddInhabitant("Goblin", "Shaman", 20.0, 0, "GoblinShaman", "Shaman");
@@ -125,7 +125,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("As you enter, you walk straight into a pair of two goblins.");
+    console.PrintLine("As you enter, you walk straight into a pair of two goblins.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Shaman", 40, 0, "GoblinShaman", "Shaman");
     room.AddRoomAction("Treasure Trove");
@@ -155,7 +155,7 @@ CONTINUE;
         player.AddSkillModifier("Brawling", random.RollDice(1, 4));
     } end;
 
-    console.Print("There is a training dummy in the middle of the room... You feel better at something.");
+    console.PrintLine("There is a training dummy in the middle of the room... You feel better at something.");
     delete roll;
     end;
 }}
@@ -175,7 +175,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("A Barterer has set up shop in the room.");
+    console.PrintLine("A Barterer has set up shop in the room.");
     room.AddShop("Barterer");
     end;
 }}
@@ -191,7 +191,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("As you enter, you walk straight into a pair of two goblins who had been guarding this area.");
+    console.PrintLine("As you enter, you walk straight into a pair of two goblins who had been guarding this area.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Priest", 40, 0, "GoblinPriest", "Priest");
     room.AddRoomAction("Treasure Trove");
@@ -211,7 +211,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("You find yourself faced by three goblins of high stature.");
+    console.PrintLine("You find yourself faced by three goblins of high stature.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Priest", 20, 0, "GoblinPriest", "Priest:Elder");
@@ -236,7 +236,7 @@ CONTINUE;
 }}
 
 {{
-    console.Print("The air grows cold...");
+    console.PrintLine("The air grows cold...");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 80, 0, "Goblin", "Squire");

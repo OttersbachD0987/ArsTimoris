@@ -192,10 +192,6 @@ int main(int argc, char** argv) {
     #pragma region UI
     #pragma region Layers
     gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("Message Overlay"), 
-        std::forward_as_tuple(std::string_view("Message Overlay"))
-    );
-    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Main Menu"), 
         std::forward_as_tuple(std::string_view("Main Menu"))
     );
@@ -239,31 +235,54 @@ int main(int argc, char** argv) {
         std::forward_as_tuple("Inventory Menu"), 
         std::forward_as_tuple(std::string_view("Inventory Menu"))
     );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Message Overlay"), 
+        std::forward_as_tuple(std::string_view("Message Overlay"))
+    );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Combat Menu Decoration"), 
+        std::forward_as_tuple(std::string_view("Combat Menu Decoration"))
+    );
 
-    ArsTimoris::UI::UILayer* messageOverlay = &gameState.uiManager.uiLayers.at("Message Overlay");
-    messageOverlay->enabled = false;
     ArsTimoris::UI::UILayer* mainMenu = &gameState.uiManager.uiLayers.at("Main Menu");
+    gameState.uiManager.renderOrder.emplace_back("Main Menu");
     mainMenu->enabled = true;
     ArsTimoris::UI::UILayer* settingsMenu = &gameState.uiManager.uiLayers.at("Settings Menu");
+    gameState.uiManager.renderOrder.emplace_back("Settings Menu");
     settingsMenu->enabled = false;
     ArsTimoris::UI::UILayer* startsMenu = &gameState.uiManager.uiLayers.at("Starts Menu");
+    gameState.uiManager.renderOrder.emplace_back("Starts Menu");
     startsMenu->enabled = false;
     ArsTimoris::UI::UILayer* roomGeneralMenu = &gameState.uiManager.uiLayers.at("Room General Menu");
+    gameState.uiManager.renderOrder.emplace_back("Room General Menu");
     roomGeneralMenu->enabled = false;
     ArsTimoris::UI::UILayer* roomMoveMenu = &gameState.uiManager.uiLayers.at("Room Move Menu");
+    gameState.uiManager.renderOrder.emplace_back("Room Move Menu");
     roomMoveMenu->enabled = false;
     ArsTimoris::UI::UILayer* roomActionsMenu = &gameState.uiManager.uiLayers.at("Room Actions Menu");
+    gameState.uiManager.renderOrder.emplace_back("Room Actions Menu");
     roomActionsMenu->enabled = false;
     ArsTimoris::UI::UILayer* combatMenu = &gameState.uiManager.uiLayers.at("Combat Menu");
+    gameState.uiManager.renderOrder.emplace_back("Combat Menu");
     combatMenu->enabled = false;
     ArsTimoris::UI::UILayer* statsMenu = &gameState.uiManager.uiLayers.at("Stats Menu");
+    gameState.uiManager.renderOrder.emplace_back("Stats Menu");
     statsMenu->enabled = false;
     ArsTimoris::UI::UILayer* levelMenu = &gameState.uiManager.uiLayers.at("Level Menu");
+    gameState.uiManager.renderOrder.emplace_back("Level Menu");
     levelMenu->enabled = false;
     ArsTimoris::UI::UILayer* inventoryMenu = &gameState.uiManager.uiLayers.at("Inventory Menu");
+    gameState.uiManager.renderOrder.emplace_back("Inventory Menu");
     inventoryMenu->enabled = false;
     ArsTimoris::UI::UILayer* shopMenu = &gameState.uiManager.uiLayers.at("Shop Menu");
+    gameState.uiManager.renderOrder.emplace_back("Shop Menu");
     shopMenu->enabled = false;
+    ArsTimoris::UI::UILayer* messageOverlay = &gameState.uiManager.uiLayers.at("Message Overlay");
+    gameState.uiManager.renderOrder.emplace_back("Message Overlay");
+    messageOverlay->enabled = false;
+    ArsTimoris::UI::UILayer* combatMenuDecoration = &gameState.uiManager.uiLayers.at("Combat Menu Decoration");
+    gameState.uiManager.renderOrder.emplace_back("Combat Menu Decoration");
+    combatMenuDecoration->enabled = false;
     #pragma endregion
 
     #pragma region UI Functions Forward Declaration
@@ -275,6 +294,7 @@ int main(int argc, char** argv) {
 
     ArsTimoris::UI::UIElement* element;
     ArsTimoris::UI::UIElement* otherElement;
+    ArsTimoris::UI::UIElement* othererElement;
 
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> classesText;
     std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> skillsText;
@@ -1084,14 +1104,25 @@ int main(int argc, char** argv) {
 
     #pragma region Combat
     combatMenu->uiElements.emplace(std::piecewise_construct, 
-        std::forward_as_tuple("aaaaaBackground Actions"), 
+        std::forward_as_tuple("Combat HUD"), 
         std::forward_as_tuple(
-            std::string_view("aaaaaBackground Actions"), 
-            ArsTimoris::UI::UIRect{{692, 408, 316, 184}}
+            std::string_view("Combat HUD"), 
+            ArsTimoris::UI::UIRect{{302, 202, 796, 496}}
         )
     );
-    element = &combatMenu->uiElements.at("aaaaaBackground Actions");
+    element = &combatMenu->uiElements.at("Combat HUD");
     element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("CombatHUDBack"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenu, element);
+
+    otherElement = element->AddChild("Background Actions", ArsTimoris::UI::UIRect{{390, 206, 316, 184}}).get(); // {692, 408, 316, 184}
+    otherElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1099,10 +1130,10 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, element);
+    ).first->second->Hookup(gameState, combatMenu, otherElement);
 
-    otherElement = element->AddChild("Top Action", ArsTimoris::UI::UIRect{{28, 2, 260, 50}}).get(); // {720, 410, 260, 50}
-    otherElement->components.emplace(std::piecewise_construct, 
+    othererElement = otherElement->AddChild("Top Action", ArsTimoris::UI::UIRect{{28, 2, 260, 50}}).get(); // {720, 410, 260, 50}
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1110,8 +1141,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    otherElement->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1122,11 +1153,11 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> topActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> topActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(othererElement->components.at("Text"));
     
-    otherElement = element->AddChild("Middle Action", ArsTimoris::UI::UIRect{{8, 62, 300, 60}}).get(); // {700, 470, 300, 60}
-    otherElement->components.emplace(std::piecewise_construct, 
+    othererElement = otherElement->AddChild("Middle Action", ArsTimoris::UI::UIRect{{8, 62, 300, 60}}).get(); // {700, 470, 300, 60}
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1134,8 +1165,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    otherElement->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1146,11 +1177,11 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> middleActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> middleActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(othererElement->components.at("Text"));
     
-    otherElement = element->AddChild("Bottom Action", ArsTimoris::UI::UIRect{{28, 132, 260, 50}}).get(); // {720, 540, 260, 50}
-    otherElement->components.emplace(std::piecewise_construct, 
+    othererElement = otherElement->AddChild("Bottom Action", ArsTimoris::UI::UIRect{{28, 132, 260, 50}}).get(); // {720, 540, 260, 50}
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Texture"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIImageComponent>(
@@ -1158,8 +1189,8 @@ int main(int argc, char** argv) {
                 true
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    otherElement->components.emplace(std::piecewise_construct, 
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    othererElement->components.emplace(std::piecewise_construct, 
         std::forward_as_tuple("Text"), 
         std::forward_as_tuple(
             std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
@@ -1170,8 +1201,8 @@ int main(int argc, char** argv) {
                 ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
             )
         )
-    ).first->second->Hookup(gameState, combatMenu, otherElement);
-    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    ).first->second->Hookup(gameState, combatMenu, othererElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> bottomActionText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(othererElement->components.at("Text"));
     #pragma endregion
 
     #pragma region Message Overlay
@@ -1741,23 +1772,11 @@ int main(int argc, char** argv) {
         otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
             int32_t ia = stoi(a_element->id.substr(3, 1));
             shop = (ShopInstance*)gameState.rooms[gameState.curRoom].data.at("Shop");
-            /*
-            if (shop->catalog[option].cost <= a_gameState.player.gold) {
-                a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
-                a_gameState.player.AddItem(shop->catalog[option].stack.itemID, 1);
-                std::cout << "You bought 1 " << ITEM_DATA[shop->catalog[option].stack.itemID].name << " for " << shop->catalog[option].cost << " gold." << std::endl;
-                if (--shop->catalog[option].stack.stackSize <= 0) {
-                    shop->catalog.erase(shop->catalog.begin() + option);
-                }
-            } else {
-                std::cout << "You do not have enough gold." << std::endl;
-            }
-            */
             if (shopCatalogs[ia].index < shop->catalog.size()) {
                 int32_t option = shopCatalogs[ia].index;
                 if (shop->catalog[option].cost <= a_gameState.player.gold) {
                     a_gameState.player.gold -= (int32_t)shop->catalog[option].cost;
-                    a_gameState.player.AddItem(shop->catalog[option].stack.itemID, 1);
+                    a_gameState.player.AddItemStack(shop->catalog[option].stack);
                     std::cout << "You bought 1 " << GameData::ITEM_DATA[shop->catalog[option].stack.itemID].name << " for " << shop->catalog[option].cost << " gold." << std::endl;
                     if (--shop->catalog[option].stack.stackSize <= 0) {
                         shop->catalog.erase(shop->catalog.begin() + option);
@@ -1822,6 +1841,51 @@ int main(int argc, char** argv) {
     }
     #pragma endregion
     
+    #pragma region Combat Decorations
+    combatMenuDecoration->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Combat HUD Top"), 
+        std::forward_as_tuple(
+            std::string_view("Combat HUD Top"), 
+            ArsTimoris::UI::UIRect{{0, 164, 1200, 636}}
+        )
+    );
+    element = &combatMenuDecoration->uiElements.at("Combat HUD Top");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("CombatHUDTop"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenuDecoration, element);
+
+    otherElement = element->AddChild("Armor Icon Label", ArsTimoris::UI::UIRect{{4, 542, 68, 62}}).get(); // {4, 706, 68, 62}
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("ArmorIcon"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenuDecoration, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Scallion",
+                "BitCrusher",
+                2.0f,
+                6,
+                20,
+                ArsTimoris::UI::UIAnchor::TOP_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, combatMenuDecoration, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> armorIconLabelText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    #pragma endregion
+
     #pragma region UI Functions IMPL
     UpdateTopBar = [&](void) {
         hpText->SetText(gameState, std::format("HP: {:>3}/{:<3}", gameState.player.curHP, gameState.player.maxHP));
@@ -2074,25 +2138,25 @@ int main(int argc, char** argv) {
 
     bool messageOpen = false;
 
+    std::function<void(void)> HandleMessageOverlayBounce = [&](void) {
+        gameState.messageStack.erase(gameState.messageStack.begin());
+        if (gameState.messageStack.size() <= 0) {
+            messageOverlay->enabled = false;
+            if (menuToChange) {
+                menuChangedCallback(gameState);
+                menuToChange = false;
+            }
+        } else {
+            messageText->SetText(gameState, gameState.messageStack[0]);
+        }
+    };
+
     while (gameState.running) {
         // Timekeeping stuff, perhaps put this in a struct called TimeData for easier usage...?
         timeData.totalTime_s += (timeData.deltaTime_s = (0.001f * (float)(timeData.deltaTime_ms = (SDL_GetTicks() - timeData.lastTime_ms))));
         timeData.lastTime_ms = SDL_GetTicks();
 
         gameState.CacheInputState();
-
-        std::function<void(void)> HandleMessageOverlayBounce = [&](void) {
-            gameState.messageStack.erase(gameState.messageStack.begin());
-            if (gameState.messageStack.size() <= 0) {
-                messageOverlay->enabled = false;
-                if (menuToChange) {
-                    menuChangedCallback(gameState);
-                    menuToChange = false;
-                }
-            } else {
-                messageText->SetText(gameState, gameState.messageStack[0]);
-            }
-        };
 
         if (!messageOverlay->enabled) {
             if (gameState.messageStack.size() > 0) {
@@ -2346,6 +2410,20 @@ int main(int argc, char** argv) {
                             if (GameData::ENCOUNTERS[encounter].event != "{}") {
                                 runEncounter = true;
                             }
+
+                            #pragma region Room Description
+                            std::string message = std::format("{}\n{}\n", GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomName, GameData::ROOM_DATA[gameState.rooms[gameState.curRoom].roomID].roomDescription);
+                            if (gameState.rooms[gameState.curRoom].roomActions.size() > 0) {
+                                for (const RoomAction& roomAction : gameState.rooms[gameState.curRoom].roomActions) {
+                                    if (roomAction.roomDescription != nullptr) {
+                                        message += roomAction.roomDescription(gameState);
+                                    }
+                                }
+                            } else {
+                                message += "The room is devoid of interactable objects.";
+                            }
+                            gameState.AddMessage(message);
+                            #pragma endregion
                         }
                     
                         room = &gameState.rooms[gameState.curRoom];
@@ -2362,6 +2440,7 @@ int main(int argc, char** argv) {
                             menuChangedCallback = [&](GameState& a_gameState) {
                                 roomGeneralMenu->enabled = false;
                                 combatMenu->enabled = true;
+                                combatMenuDecoration->enabled = true;
                                 choice = 0;
                                 a_gameState.menu = Menu::COMBAT;
                             };
@@ -2383,17 +2462,21 @@ int main(int argc, char** argv) {
                     }
                     case Menu::MOVING: {
                         room = &gameState.rooms[gameState.curRoom];
-                        labelText->SetText(gameState, /*&roomMoveMenu->uiElements.at("Label"),*/ std::format("{}/{}) [{}] \\[FCH:{}]{}", choice + 1, room->connections.size(), room->connections[choice].destination, (gameState.rooms[room->connections[choice].destination].initialized ? "FF,00,00" : "00,FF,00"), GameData::ROOM_DATA[gameState.rooms[room->connections[choice].destination].roomID].roomName));
+                        labelText->SetText(gameState, std::format("{}/{}) [{}] \\[FCH:{}]{}", choice + 1, room->connections.size(), room->connections[choice].destination, (gameState.rooms[room->connections[choice].destination].initialized ? "FF,00,00" : "00,FF,00"), GameData::ROOM_DATA[gameState.rooms[room->connections[choice].destination].roomID].roomName));
                         break;
                     }
                     case Menu::ROOM_ACTIONS: {
                         room = &gameState.rooms[gameState.curRoom];
                         if (!room->roomActions.empty()) {
-                            roomActionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Label"),*/ std::format("{}/{}) {}", choice + 1, room->roomActions.size(), room->roomActions[choice].name));
-                            roomActionDescriptionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Room Action"),*/ std::format("{}", room->roomActions[choice].description));
+                            roomActionText->SetText(gameState, std::format("{}/{}) {}", choice + 1, room->roomActions.size(), room->roomActions[choice].name));
+                            roomActionDescriptionText->SetText(gameState,
+                                room->roomActions[choice].roomDescription != nullptr ? 
+                                    std::format("{}\n\n{}", room->roomActions[choice].description, room->roomActions[choice].roomDescription(gameState)) : 
+                                    room->roomActions[choice].description
+                            );
                         } else {
-                            roomActionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Label"),*/ "None");
-                            roomActionDescriptionText->SetText(gameState, /*&roomActionsMenu->uiElements.at("Room Action"),*/ "None");
+                            roomActionText->SetText(gameState, "None");
+                            roomActionDescriptionText->SetText(gameState, "None");
                         }
                         break;
                     }
@@ -2424,6 +2507,7 @@ int main(int argc, char** argv) {
                             topActionText->SetText(gameState, std::format("{}", gameState.player.actions[(choice - 1 < 0) ? (gameState.player.actions.size() - 1) : (choice - 1)].name));
                             middleActionText->SetText(gameState, std::format("{}", gameState.player.actions[choice].name));
                             bottomActionText->SetText(gameState, std::format("{}", gameState.player.actions[(choice + 1 >= gameState.player.actions.size()) ? 0 : (choice + 1)].name));
+                            armorIconLabelText->SetText(gameState, std::format("{}", gameState.player.GetEffectiveArmor()));
                         
                             if (gameState.player.usedTurns >= gameState.player.turns) {
                                 gameState.player.usedTurns = 0;
@@ -2471,6 +2555,7 @@ int main(int argc, char** argv) {
                                     gameState.screen = Screen::GAME_OVER;
                                     gameState.menu = Menu::NONE;
                                     combatMenu->enabled = false;
+                                    combatMenuDecoration->enabled = false;
                                 } else {
                                     gameState.player.TurnEnd(gameState);
                                 }
@@ -2488,9 +2573,10 @@ int main(int argc, char** argv) {
                             }
                         } else {
                             menuToChange = true;
-                            menuChangedCallback = [&roomGeneralMenu, &combatMenu](GameState& a_gameState) {
+                            menuChangedCallback = [&roomGeneralMenu, &combatMenu, &combatMenuDecoration](GameState& a_gameState) {
                                 roomGeneralMenu->enabled = true;
                                 combatMenu->enabled = false;
+                                combatMenuDecoration->enabled = false;
                                 a_gameState.menu = Menu::NONE;
                             };
                         }

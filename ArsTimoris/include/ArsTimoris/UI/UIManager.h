@@ -15,6 +15,8 @@ namespace ArsTimoris::UI {
 
         /// @brief 
         std::unordered_map<std::string, UILayer> uiLayers;
+        /// @brief
+        std::vector<std::string> renderOrder;
         /// @brief 
         bool dirtyRecalculate = true;
 

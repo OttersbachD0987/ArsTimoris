@@ -89,10 +89,30 @@ void PlayerData::AddItem(size_t a_itemID, uint32_t a_itemAmount) {
     equipped.push_back(false);
 }
 
+void PlayerData::AddItemStack(ItemStack a_stack) {
+    for (size_t i = 0; i < items.size(); ++i) {
+        if (items[i].Compare(&a_stack)) {
+            items[i].stackSize += a_stack.stackSize;
+            return;
+        }
+    }
+    items.push_back(a_stack);
+    equipped.push_back(false);
+}
+
 bool PlayerData::HasItem(size_t a_itemID, uint32_t a_itemAmount) {
     for (size_t i = 0; i < items.size(); ++i) {
         if (items[i].itemID == a_itemID) {
             return a_itemAmount <= items[i].stackSize;
+        }
+    }
+    return false;
+}
+
+bool PlayerData::HasItemStack(ItemStack* a_stack) {
+    for (size_t i = 0; i < items.size(); ++i) {
+        if (items[i].Compare(a_stack)) {
+            return true;
         }
     }
     return false;

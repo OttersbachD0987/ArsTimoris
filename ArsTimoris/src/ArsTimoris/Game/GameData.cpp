@@ -371,7 +371,7 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 return a_target != a_caster && a_target->curHP > 0 && a_caster->curMana > 20; 
             },
             [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) {
-                a_gameState.AppendMessage("The player gestures a wicked glyph in the air ");
+                a_gameState.AddMessage("The player gestures a wicked glyph in the air ");
                 int32_t modifier = 
                     a_caster->GetSkillModifier("Persuasion") + 
                     a_caster->GetSkillModifier("Knowledge of Death") + 
@@ -386,12 +386,12 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 if (roll == 20 || result >= a_target->GetEffectiveArmor()) {
                     NPCData* npc = dynamic_cast<NPCData*>(a_target);
                     if (npc != nullptr) {
-                        a_gameState.AddMessage(std::format("and a dull thud rings out as the color drains away from the {}.", npc->name));
+                        a_gameState.AppendMessage(std::format("and a dull thud rings out as the color drains away from the {}.", npc->name));
                         npc->onDeath.push_back(
                             [](GameState& a_gameState, NPCData& a_npc) {
                                 a_gameState.player.xp += a_npc.curMana;
                                 a_gameState.player.RegainMana(a_npc.xp);
-                                a_gameState.AppendMessage(std::format("The corpse of the {} violently shudders before a strange burst of mana rips away and surges into the player.", a_npc.name));
+                                a_gameState.AddMessage(std::format("The corpse of the {} violently shudders before a strange burst of mana rips away and surges into the player.", a_npc.name));
                             }
                         );
                     }
@@ -416,17 +416,17 @@ std::unordered_map<std::string, Action> GameData::STANDARD_ACTIONS = {
                 return a_target->curHP > 0 && a_caster->curMana > 10 && !a_target->timedEffects.contains("Bone Shield."); 
             },
             [](GameState& a_gameState, EntityData* a_caster, EntityData* a_target) {
-                a_gameState.AppendMessage("The player raises their hands, and forward burst bones, creating a protective carapace around ");
+                a_gameState.AddMessage("The player raises their hands, and forward burst bones, creating a protective carapace around ");
                 
                 a_target->armor += 2;
                 a_target->timedEffects.emplace("Bone Shield", STANDARD_TIMED_EFFECTS.at("Bone Shield"));
 
                 if (a_caster == a_target) {
-                    a_gameState.AddMessage("themselves.");
+                    a_gameState.AppendMessage("themselves.");
                 } else {
                     NPCData* npc = dynamic_cast<NPCData*>(a_target);
                     if (npc != nullptr) {
-                        a_gameState.AddMessage(std::format("the {}.", npc->name));
+                        a_gameState.AppendMessage(std::format("the {}.", npc->name));
                     }
                 }
 
@@ -547,6 +547,23 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                         }
                     }
                 },
+                ClassLevel {
+                    [](GameState& a_gameState, PlayerData& a_player) {
+                        return "Have at least 20 xp.";
+                    },
+                    [](GameState& a_gameState, PlayerData& a_player) {
+                        return a_player.xp >= 20;
+                    },
+                    {
+                        [](GameState& a_gameState, PlayerData& a_player, bool a_free) {
+                            if (!a_free) {
+                                a_player.xp -= 20;
+                            }
+                            a_player.curHP += 25;
+                            a_player.maxHP += 25;
+                        }
+                    }
+                },
             }
         }
     },
@@ -634,6 +651,26 @@ std::unordered_map<std::string, ClassData> GameData::CLASSES = {
                         }
                     }
                 },
+                ClassLevel {
+                    [](GameState& a_gameState, PlayerData& a_player) {
+                        return "Have at least 45 xp and at least 2 levels in Necromancer and at least 2 levels in Fighter.";
+                    },
+                    [](GameState& a_gameState, PlayerData& a_player) {
+                        return a_player.xp >= 45 && a_player.LevelInClass("Necromancer") >= 2 && a_player.LevelInClass("Fighter") >= 2;
+                    },
+                    {
+                        [](GameState& a_gameState, PlayerData& a_player, bool a_free) {
+                            if (!a_free) {
+                                a_player.xp -= 45;
+                            }
+                            a_player.maxHP += 25;
+                            a_player.curHP += 25;
+                            if (std::find(a_player.actions.begin(), a_player.actions.end(), STANDARD_ACTIONS.at("Garden of Rot")) == a_player.actions.end()) {
+                                a_player.actions.push_back(STANDARD_ACTIONS.at("Garden of Rot"));
+                            }
+                        }
+                    }
+                },
             }
         }
     },
@@ -665,7 +702,7 @@ std::vector<RoomData> GameData::ROOM_DATA = {
         [](GameState& a_gameState, const RoomData& a_roomData) { return 0; },
         false, 0, 0, 2, 4
     ),
-    RoomData("Simple", "",
+    RoomData("Simple", "A simple corridor leading further into the depths.",
         [](GameState& a_gameState, const RoomData& a_roomData) { return 35; }, 
         true, 0, 1, 1, 3
     ),
@@ -1063,6 +1100,9 @@ std::unordered_map<std::string, NPCTemplate> GameData::NPC_TEMPLATES = {
                     a_npc.DrainMana(10);
                     a_gameState.player.Hurt((int32_t)amount);
                     a_gameState.AddMessage(std::format("The {} silently holds vigil, and {} stand taller as you feel your life being pulled out of you... You take {} damage.", a_npc.name, healed, amount));
+                    for (int i = 0; i < 1200; ++i) {
+                        a_gameState.assets.particles.at("Smoke")->SpawnParticle({{(float)i, 800}, {(float)(a_gameState.RollDice(1, 3) - 2) * 3.0f, -(float)a_gameState.RollDice(1, 20) * 2.0f}, 0, 0, 3, 6});
+                    }
                 }
 
                 a_gameState.AddMessage(std::format("The {} swings their scythe at the player and ", a_npc.name));
