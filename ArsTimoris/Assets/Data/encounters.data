@@ -125,6 +125,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("As you enter, you walk straight into a pair of two goblins.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Shaman", 40, 0, "GoblinShaman", "Shaman");
     room.AddRoomAction("Treasure Trove");
@@ -174,6 +175,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("A Barterer has set up shop in the room.");
     room.AddShop("Barterer");
     end;
 }}
@@ -189,6 +191,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("As you enter, you walk straight into a pair of two goblins who had been guarding this area.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Priest", 40, 0, "GoblinPriest", "Priest");
     room.AddRoomAction("Treasure Trove");
@@ -208,6 +211,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("You find yourself faced by three goblins of high stature.");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Priest", 20, 0, "GoblinPriest", "Priest:Elder");
@@ -232,6 +236,7 @@ CONTINUE;
 }}
 
 {{
+    console.Print("The air grows cold...");
     room.AddInhabitant("Goblin", "Squire", 0, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 40, 0, "Goblin", "Squire");
     room.AddInhabitant("Goblin", "Squire", 80, 0, "Goblin", "Squire");
