@@ -4,6 +4,8 @@
 
 Ars Timoris is a roguelike RPG with basic modding support. All data files can be found in the Data folder, and end with the `.data` file extension. A custom interpreted scripting language is also used for this project. In the Assets folder you can `.particle` & `.render` files. The Resources folder contains all `.png`, `.wav`, `.ttf`, & `.fpng` files.
 
+For the controls being clarified go to [Controls](Docs/CONTROLS.md).
+
 ## Requirements For Building Source
 
 ### git
