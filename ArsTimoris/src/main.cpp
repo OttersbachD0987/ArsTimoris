@@ -243,6 +243,10 @@ int main(int argc, char** argv) {
         std::forward_as_tuple("Combat Menu Decoration"), 
         std::forward_as_tuple(std::string_view("Combat Menu Decoration"))
     );
+    gameState.uiManager.uiLayers.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Game End"), 
+        std::forward_as_tuple(std::string_view("Game End"))
+    );
 
     ArsTimoris::UI::UILayer* mainMenu = &gameState.uiManager.uiLayers.at("Main Menu");
     gameState.uiManager.renderOrder.emplace_back("Main Menu");
@@ -283,6 +287,9 @@ int main(int argc, char** argv) {
     ArsTimoris::UI::UILayer* combatMenuDecoration = &gameState.uiManager.uiLayers.at("Combat Menu Decoration");
     gameState.uiManager.renderOrder.emplace_back("Combat Menu Decoration");
     combatMenuDecoration->enabled = false;
+    ArsTimoris::UI::UILayer* gameEnd = &gameState.uiManager.uiLayers.at("Game End");
+    gameState.uiManager.renderOrder.emplace_back("Game End");
+    gameEnd->enabled = false;
     #pragma endregion
 
     #pragma region UI Functions Forward Declaration
@@ -1940,6 +1947,107 @@ int main(int argc, char** argv) {
         shopGoldText->SetText(gameState, std::format("GP: {}", gameState.player.gold));
     };
     #pragma endregion
+    
+    #pragma region Stats Menu
+    gameEnd->uiElements.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("StatsPanel"), 
+        std::forward_as_tuple(
+            std::string_view("StatsPanel"), 
+            ArsTimoris::UI::UIRect{{0, 140, 1200, 800}}
+        )
+    );
+    element = &gameEnd->uiElements.at("StatsPanel");
+    element->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, element);
+
+    otherElement = element->AddChild("Classes", ArsTimoris::UI::UIRect{{5, 5, 300, 550}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Classes:",
+                "BitCrusher",
+                2.0f,
+                8,
+                8,
+                ArsTimoris::UI::UIAnchor::TOP_LEFT
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> classesEndText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+
+    otherElement = element->AddChild("Levels", ArsTimoris::UI::UIRect{{5, 750, 700, 45}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Level Up",
+                "BitCrusher",
+                3.0f,
+                8,
+                6,
+                ArsTimoris::UI::UIAnchor::MIDDLE_CENTER
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    otherElement->onMouseLeftDown.emplace_back([&](GameState& a_gameState, ArsTimoris::UI::UILayer* a_uiLayer, ArsTimoris::UI::UIElement* a_element, SDL_FPoint* a_mousePos) {
+        mainMenu->enabled = true;
+        gameEnd->enabled = false;
+        gameState.screen = Screen::TITLE;
+        gameState.menu = Menu::NONE;
+        return true;
+    });
+
+    otherElement = element->AddChild("Skills", ArsTimoris::UI::UIRect{{700, 5, 495, 590}}).get();
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Texture"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIImageComponent>(
+                std::string_view("UIPanel"), 
+                true
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    otherElement->components.emplace(std::piecewise_construct, 
+        std::forward_as_tuple("Text"), 
+        std::forward_as_tuple(
+            std::make_shared<ArsTimoris::UI::UIAtlasTextComponent>(
+                "Skills:",
+                "BitCrusher",
+                2.0f,
+                8,
+                8,
+                ArsTimoris::UI::UIAnchor::TOP_LEFT
+            )
+        )
+    ).first->second->Hookup(gameState, gameEnd, otherElement);
+    std::shared_ptr<ArsTimoris::UI::UIAtlasTextComponent> skillsEndText = std::dynamic_pointer_cast<ArsTimoris::UI::UIAtlasTextComponent>(otherElement->components.at("Text"));
+    #pragma endregion
     #pragma endregion
 
     if (gameState.uiManager.dirtyRecalculate) {
@@ -2596,6 +2704,8 @@ int main(int argc, char** argv) {
                 break;
             }
             case Screen::GAME_OVER: {
+                gameState.screen = Screen::TITLE;
+                break;
                 room = &gameState.rooms[gameState.curRoom];
                 const RoomData& roomType = GameData::ROOM_DATA[room->roomID];
                 std::cout 
